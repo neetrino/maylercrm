@@ -14,6 +14,35 @@ type Attachment = {
   createdAt: string;
 };
 
+type AttachmentsGrouped = {
+  agreement_files: Attachment[];
+  floorplans_files: Attachment[];
+  images_files: Attachment[];
+  progress_images_files: Attachment[];
+};
+
+/** Преобразует attachments из формата API (массив) в формат для FileUpload (объект с группами) */
+function normalizeAttachmentsForUpload(
+  attachments: Attachment[] | AttachmentsGrouped | undefined
+): AttachmentsGrouped {
+  const empty = {
+    agreement_files: [],
+    floorplans_files: [],
+    images_files: [],
+    progress_images_files: [],
+  };
+  if (!attachments) return empty;
+  if (Array.isArray(attachments)) {
+    return {
+      agreement_files: attachments.filter((a) => a.fileType === 'AGREEMENT'),
+      floorplans_files: attachments.filter((a) => a.fileType === 'FLOORPLAN'),
+      images_files: attachments.filter((a) => a.fileType === 'IMAGE'),
+      progress_images_files: attachments.filter((a) => a.fileType === 'PROGRESS_IMAGE'),
+    };
+  }
+  return attachments;
+}
+
 type Apartment = {
   id: number;
   apartmentNo: string;
@@ -40,12 +69,7 @@ type Apartment = {
   district_name: string;
   district_slug: string;
   updatedAt: string;
-  attachments?: {
-    agreement_files: Attachment[];
-    floorplans_files: Attachment[];
-    images_files: Attachment[];
-    progress_images_files: Attachment[];
-  };
+  attachments?: Attachment[] | AttachmentsGrouped;
 };
 
 interface ApartmentCardProps {
@@ -694,12 +718,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                   </label>
                   <FileUpload
                     apartmentId={apartmentId}
-                    attachments={apartment.attachments || {
-                      agreement_files: [],
-                      floorplans_files: [],
-                      images_files: [],
-                      progress_images_files: [],
-                    }}
+                    attachments={normalizeAttachmentsForUpload(apartment.attachments)}
                     onUploadSuccess={refreshAfterUpload}
                     fileTypeOnly="AGREEMENT"
                   />
@@ -786,12 +805,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                   </label>
                   <FileUpload
                     apartmentId={apartmentId}
-                    attachments={apartment.attachments || {
-                      agreement_files: [],
-                      floorplans_files: [],
-                      images_files: [],
-                      progress_images_files: [],
-                    }}
+                    attachments={normalizeAttachmentsForUpload(apartment.attachments)}
                     onUploadSuccess={refreshAfterUpload}
                     fileTypeOnly="AGREEMENT"
                   />
@@ -927,16 +941,14 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
           </div>
 
           {/* Files Section */}
-          {apartment.attachments && (
-            <div className="card p-6">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900">Files</h2>
-              <FileUpload
-                apartmentId={apartmentId}
-                attachments={apartment.attachments}
-                onUploadSuccess={refreshAfterUpload}
-              />
-            </div>
-          )}
+          <div className="card p-6">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">Files</h2>
+            <FileUpload
+              apartmentId={apartmentId}
+              attachments={normalizeAttachmentsForUpload(apartment.attachments)}
+              onUploadSuccess={refreshAfterUpload}
+            />
+          </div>
         </div>
       )}
     </div>

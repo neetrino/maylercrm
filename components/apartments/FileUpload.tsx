@@ -128,7 +128,7 @@ export default function FileUpload({
     return (
       <div className="mt-2">
         {label && <h4 className="mb-2 text-sm font-medium text-gray-700">{label}</h4>}
-        {files.length === 0 ? (
+        {!files || files.length === 0 ? (
           <p className="text-sm text-gray-500">No files</p>
         ) : (
           <div className="space-y-2">
@@ -173,15 +173,16 @@ export default function FileUpload({
   ];
 
   const getFileList = (type: string) => {
+    if (!attachments) return [];
     switch (type) {
       case 'IMAGE':
-        return attachments.images_files;
+        return attachments.images_files ?? [];
       case 'PROGRESS_IMAGE':
-        return attachments.progress_images_files;
+        return attachments.progress_images_files ?? [];
       case 'FLOORPLAN':
-        return attachments.floorplans_files;
+        return attachments.floorplans_files ?? [];
       case 'AGREEMENT':
-        return attachments.agreement_files;
+        return attachments.agreement_files ?? [];
       default:
         return [];
     }
