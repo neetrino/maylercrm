@@ -73,6 +73,7 @@ export async function POST(
     // Проверка типа файла
     const isImage = fileType === 'IMAGE' || fileType === 'PROGRESS_IMAGE';
     const isDocument = fileType === 'AGREEMENT' || fileType === 'FLOORPLAN';
+    const isDocumentSection = isDocument; // Agreement/Floorplans принимают и PDF, и скриншоты (image)
 
     if (isImage && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
       return NextResponse.json(
@@ -81,11 +82,14 @@ export async function POST(
       );
     }
 
-    if (isDocument && !ALLOWED_DOCUMENT_TYPES.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'Invalid document type. Allowed: PDF, DOC, DOCX' },
-        { status: 400 }
-      );
+    if (isDocumentSection) {
+      const allowed = [...ALLOWED_DOCUMENT_TYPES, ...ALLOWED_IMAGE_TYPES];
+      if (!allowed.includes(file.type)) {
+        return NextResponse.json(
+          { error: 'Invalid file type. Allowed: PDF, DOC, DOCX, or image (JPEG, PNG, GIF, WebP)' },
+          { status: 400 }
+        );
+      }
     }
 
     // Вычисляем MD5 хеш файла

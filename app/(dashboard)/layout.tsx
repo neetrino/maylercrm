@@ -1,7 +1,11 @@
 import { auth } from '@/auth';
+import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import LogoutButton from '@/components/layout/LogoutButton';
 import SidebarNav from '@/components/layout/SidebarNav';
+
+const LOGO_URL =
+  'https://26l5rtuqulppomse.public.blob.vercel-storage.com/meluvis-logo.svg';
 
 export default async function DashboardLayout({
   children,
@@ -33,8 +37,16 @@ export default async function DashboardLayout({
       <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-gray-200 bg-white">
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center border-b border-gray-200 px-6">
-            <h1 className="text-xl font-bold text-gray-900">Meluvis CRM</h1>
+          <div className="flex h-16 items-center border-b border-gray-200 px-4">
+            <Image
+              src={LOGO_URL}
+              alt="Meluvis CRM"
+              width={160}
+              height={56}
+              className="h-10 w-auto object-contain object-left brightness-0"
+              priority
+              unoptimized
+            />
           </div>
 
           {/* Navigation */}
