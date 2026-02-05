@@ -1,6 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '26l5rtuqulppomse.public.blob.vercel-storage.com',
+        pathname: '/**',
+      },
+    ],
+  },
   // Отключаем кэширование в dev режиме для избежания проблем с webpack
   webpack: (config, { dev, isServer }) => {
     if (dev && !isServer) {

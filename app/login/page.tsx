@@ -1,8 +1,12 @@
 'use client';
 
+import Image from 'next/image';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+const LOGO_URL =
+  'https://26l5rtuqulppomse.public.blob.vercel-storage.com/meluvis-logo.svg';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,9 +44,17 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="card p-8">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Meluvis CRM</h1>
-            <p className="mt-2 text-sm text-gray-500">
+          <div className="mb-8 flex flex-col items-center">
+            <Image
+              src={LOGO_URL}
+              alt="Meluvis CRM"
+              width={196}
+              height={68}
+              className="h-14 w-auto object-contain brightness-0"
+              priority
+              unoptimized
+            />
+            <p className="mt-3 text-sm text-gray-500">
               Sign in to your account
             </p>
           </div>
