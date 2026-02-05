@@ -1,0 +1,3 @@
+district_slug;building_slug;apartment_no;apartment_type;status;sqm;price_sqm;total_price;total_paid;sales_type;deal_date;ownership_name;email;passport_tax_no;phone;deal_description;matter_link;floorplan_distribution;exterior_link;exterior_link2
+kentron;tower-1;12.May;2;available;52.4;650000;34060000;0;unsold;;;;;;;;;;
+kentron;tower-1;12.Jun;2;upcoming;48.0;640000;30720000;0;unsold;;;;;;;;;;

@@ -120,11 +120,61 @@ export default function FileUpload({
     }
   };
 
+  const isImageType = (type: string) =>
+    type === 'IMAGE' || type === 'PROGRESS_IMAGE';
+
+  const renderImageGrid = (files: Attachment[], _type: string) => {
+    if (!files || files.length === 0) {
+      return <p className="text-sm text-gray-500">No images</p>;
+    }
+    return (
+      <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        {files.map((file) => (
+          <div
+            key={file.id}
+            className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+          >
+            <a
+              href={file.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block aspect-square overflow-hidden bg-gray-100"
+            >
+              <img
+                src={file.fileUrl}
+                alt={file.fileName || 'Image'}
+                className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              />
+            </a>
+            <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-3 py-2">
+              <span
+                className="min-w-0 flex-1 truncate text-xs text-gray-600"
+                title={file.fileName || undefined}
+              >
+                {file.fileName || 'Image'}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleDelete(file.id)}
+                className="shrink-0 rounded-md bg-red-50 px-2 py-1 text-xs text-red-600 transition-colors hover:bg-red-100"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderFileList = (
     files: Attachment[],
-    _type: string,
+    fileType: string,
     label?: string
   ) => {
+    if (isImageType(fileType)) {
+      return renderImageGrid(files, fileType);
+    }
     return (
       <div className="mt-2">
         {label && <h4 className="mb-2 text-sm font-medium text-gray-700">{label}</h4>}
@@ -201,8 +251,16 @@ export default function FileUpload({
         const isUploading = uploading[fileType.type] || false;
         const error = uploadError[fileType.type];
 
+        const isImageSection = isImageType(fileType.type);
         return (
-          <div key={fileType.type} className="space-y-3">
+          <div
+            key={fileType.type}
+            className={
+              isImageSection
+                ? 'rounded-xl border border-gray-100 bg-gray-50/50 p-4 shadow-sm'
+                : 'space-y-3'
+            }
+          >
             <div className="flex items-center justify-between">
               {!fileTypeOnly && (
                 <h4 className="text-sm font-medium text-gray-700">
@@ -221,11 +279,13 @@ export default function FileUpload({
               </label>
             </div>
             {error && (
-              <div className="rounded-md bg-red-50 p-2">
+              <div className="mt-2 rounded-md bg-red-50 p-2">
                 <p className="text-xs text-red-800">{error}</p>
               </div>
             )}
-            {renderFileList(files, fileType.type)}
+            <div className={isImageSection ? 'mt-3' : ''}>
+              {renderFileList(files, fileType.type)}
+            </div>
           </div>
         );
       })}

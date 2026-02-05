@@ -15,7 +15,8 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx scripts/create-users.ts",
     "db:seed-data": "tsx scripts/seed-data.ts",
-    "db:generate-test": "tsx scripts/generate-test-data.ts"
+    "db:generate-test": "tsx scripts/generate-test-data.ts",
+    "db:import-csv": "tsx scripts/import-from-csv.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
@@ -35,6 +36,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.19",
+    "csv-parse": "^6.1.0",
     "dotenv": "^17.2.3",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.5",
