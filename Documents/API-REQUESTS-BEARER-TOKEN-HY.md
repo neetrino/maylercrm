@@ -7,6 +7,103 @@
 
 ---
 
+## 📋 Full Data API — Բոլոր տվյալները մեկ JSON-ում (GET)
+
+Ստանալ **բոլոր** տվյալները **մեկ** հարցումով: Districts → Buildings → Apartments (attachments-ով միասին): Արտաքին թիմը կարող է փոխարինել 4-5 առանձին հարցումները մեկ հարցումով:
+
+**Endpoint:** `GET /api/external/full`
+
+**Հարցում:**
+```bash
+curl -L -X GET "https://meluviscrm.vercel.app/api/external/full" \
+  -H "Authorization: Bearer 026bf0c4fdbe8af4c3a3a14485c02eb160833b87758323e60fe2ac701a6f9852" \
+  -H "Content-Type: application/json"
+```
+
+**Պատասխան:**
+```json
+{
+  "districts": [
+    {
+      "id": 1,
+      "slug": "kentron",
+      "name": "Kentron",
+      "buildings": [
+        {
+          "id": 1,
+          "district_id": 1,
+          "name": "Tower 1",
+          "slug": "tower-1",
+          "apartments": [
+            {
+              "id": 1,
+              "apartment_no": "12-05",
+              "apartment_type": 2,
+              "status": "available",
+              "sqm": 52.4,
+              "price_sqm": 650000,
+              "total_price": 34060000,
+              "total_paid": 0,
+              "balance": 34060000,
+              "deal_date": null,
+              "ownership_name": null,
+              "email": null,
+              "passport_tax_no": null,
+              "phone": null,
+              "sales_type": "unsold",
+              "deal_description": null,
+              "matter_link": null,
+              "floorplan_distribution": null,
+              "exterior_link": null,
+              "exterior_link2": null,
+              "building_id": 1,
+              "building_slug": "tower-1",
+              "building_name": "Tower 1",
+              "district_id": 1,
+              "district_slug": "kentron",
+              "district_name": "Kentron",
+              "attachments": [
+                {
+                  "id": 1,
+                  "fileType": "FLOORPLAN",
+                  "fileUrl": "https://...",
+                  "fileName": "floorplan.pdf",
+                  "fileSize": 12345,
+                  "md5Hash": "...",
+                  "createdAt": "2026-01-15T10:00:00Z"
+                }
+              ],
+              "created_at": "2026-01-19T14:27:19.476Z",
+              "updated_at": "2026-01-19T14:27:19.476Z"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "generated_at": "2026-02-05T12:00:00.000Z",
+    "total_districts": 7,
+    "total_buildings": 22,
+    "total_apartments": 333
+  }
+}
+```
+
+**Պատասխանի դաշտեր:**
+- `districts` (array) — Թաղամասերի զանգված, յուրաքանչյուրը պարունակում է `buildings`
+- `buildings` (array) — Շենքերի զանգված, յուրաքանչյուրը պարունակում է `apartments`
+- `apartments` (array) — Բնակարանների զանգված endpoint 4-ի նման (լրիվ դաշտեր + attachments)
+- `meta` (object) — Մետատեղեկատվություն
+  - `generated_at` (string, ISO 8601) — Պատասխանի ձևավորման ժամանակ
+  - `total_districts` (number) — Ընդհանուր թաղամասեր
+  - `total_buildings` (number) — Ընդհանուր շենքեր
+  - `total_apartments` (number) — Ընդհանուր բնակարաններ
+
+**Կեշավորում:** Պատասխանը կեշավորվում է 1–2 րոպե (`Cache-Control`)
+
+---
+
 ## 📋 Հիմնական 5 API Endpoints (արտաքին թիմի համար)
 
 ### 1. Districts list (GET)
@@ -615,6 +712,14 @@ curl -L -X GET "https://meluviscrm.vercel.app/api/districts" \
 
 ## 📝 Ամբողջական հարցումների հոսքի օրինակ
 
+**Տարբերակ A — Բոլոր տվյալները մեկ հարցումով (Full API):**
+```bash
+curl -L -X GET "https://meluviscrm.vercel.app/api/external/full" \
+  -H "Authorization: Bearer 026bf0c4fdbe8af4c3a3a14485c02eb160833b87758323e60fe2ac701a6f9852" \
+  -H "Content-Type: application/json"
+```
+
+**Տարբերակ B — Առանձին հարցումներ (4–5 քայլ):**
 ```bash
 # 1. Ստանալ թաղամասերի ցուցակ
 curl -L -X GET "https://meluviscrm.vercel.app/api/districts" \

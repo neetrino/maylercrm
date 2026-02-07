@@ -1,0 +1,114 @@
+{
+  "info": {
+    "name": "Meluvis CRM API",
+    "description": "API запросы для Meluvis CRM",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://meluviscrm.vercel.app"
+    },
+    {
+      "key": "API_TOKEN",
+      "value": "your-api-token-here"
+    }
+  ],
+  "item": [
+    {
+      "name": "External - Full Data",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{API_TOKEN}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/external/full",
+          "host": ["{{base_url}}"],
+          "path": ["api", "external", "full"]
+        },
+        "description": "Получить все данные одним запросом: districts → buildings → apartments (с attachments)"
+      }
+    },
+    {
+      "name": "External - Apartment by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{API_TOKEN}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/external/apartments/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "external", "apartments", "1"]
+        },
+        "description": "Получить детали квартиры по ID"
+      }
+    },
+    {
+      "name": "Districts",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{API_TOKEN}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/districts",
+          "host": ["{{base_url}}"],
+          "path": ["api", "districts"]
+        },
+        "description": "Список районов"
+      }
+    },
+    {
+      "name": "Buildings by District",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{API_TOKEN}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/districts/1/buildings",
+          "host": ["{{base_url}}"],
+          "path": ["api", "districts", "1", "buildings"]
+        },
+        "description": "Здания по ID района (замените 1 на нужный district_id)"
+      }
+    },
+    {
+      "name": "Apartments by Building",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{API_TOKEN}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/buildings/1/apartments",
+          "host": ["{{base_url}}"],
+          "path": ["api", "buildings", "1", "apartments"]
+        },
+        "description": "Квартиры по ID здания (замените 1 на нужный building_id)"
+      }
+    }
+  ]
+}
