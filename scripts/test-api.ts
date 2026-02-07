@@ -106,6 +106,19 @@ async function runTests() {
   console.log(`📍 Базовый URL: ${API_BASE_URL}`);
   console.log(`🔑 API Token: ${API_TOKEN ? '***' + API_TOKEN.slice(-4) : 'НЕ УСТАНОВЛЕН'}`);
 
+  // Тест 0: Получить все данные одним запросом (external full)
+  results.push(
+    await testEndpoint(
+      '0. Получить все данные (districts+buildings+apartments)',
+      '/api/external/full'
+    )
+  );
+  if (results[0].success && results[0].data?.meta) {
+    const m = results[0].data.meta;
+    console.log(`   📊 Districts: ${m.total_districts}, Buildings: ${m.total_buildings}, Apartments: ${m.total_apartments}`);
+  }
+  await new Promise(resolve => setTimeout(resolve, 500));
+
   // Тест 1: Получить список районов
   results.push(
     await testEndpoint(
@@ -117,10 +130,12 @@ async function runTests() {
   // Ждём немного между запросами
   await new Promise(resolve => setTimeout(resolve, 500));
 
-  // Тест 2: Получить здания по District ID (нужен реальный ID из первого теста)
-  const districts = results[0].data;
-  if (districts && Array.isArray(districts) && districts.length > 0) {
-    const districtId = districts[0].id;
+  // Тест 2: Получить здания по District ID (ID из full или districts)
+  const fullData = results[0].data;
+  const districts = fullData?.districts || results[1]?.data?.data || results[1]?.data;
+  const districtsList = Array.isArray(districts) ? districts : [];
+  if (districtsList.length > 0) {
+    const districtId = districtsList[0].id;
     results.push(
       await testEndpoint(
         '2. Получить здания по District ID',
@@ -131,8 +146,9 @@ async function runTests() {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Тест 3: Получить квартиры по Building ID (нужен реальный ID из второго теста)
-    const buildings = results[1].data;
-    if (buildings && Array.isArray(buildings) && buildings.length > 0) {
+    const buildingsResp = results[2].data;
+    const buildings = buildingsResp?.data || (Array.isArray(buildingsResp) ? buildingsResp : []);
+    if (Array.isArray(buildings) && buildings.length > 0) {
       const buildingId = buildings[0].id;
       results.push(
         await testEndpoint(
@@ -144,9 +160,11 @@ async function runTests() {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Тест 4: Получить детали квартиры (нужен реальный ID из третьего теста)
-      const apartments = results[2].data;
-      if (apartments && apartments.items && Array.isArray(apartments.items) && apartments.items.length > 0) {
-        const apartmentId = apartments.items[0].id;
+      const apartmentsResp = results[3].data;
+      const apartments = apartmentsResp?.items || apartmentsResp;
+      const apartmentsList = Array.isArray(apartments) ? apartments : [];
+      if (apartmentsList.length > 0) {
+        const apartmentId = apartmentsList[0].id;
         results.push(
           await testEndpoint(
             '4. Получить детали квартиры',
