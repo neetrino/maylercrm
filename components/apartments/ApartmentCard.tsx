@@ -9,10 +9,12 @@ import FileUpload from './FileUpload';
 function getEmbedPreviewUrl(url: string): string {
   try {
     const u = url.trim();
-    // Matterport: embed?m=ID
+    // Matterport: use /show/?m=ID (same as embed but sometimes different embed policy)
     if (u.includes('matterport.com')) {
-      const match = u.match(/[?&]m=([^&]+)/);
-      if (match) return `https://my.matterport.com/embed?m=${match[1]}`;
+      const mMatch = u.match(/[?&]m=([^&]+)/);
+      if (mMatch) return `https://my.matterport.com/show/?m=${mMatch[1]}`;
+      const spaceMatch = u.match(/\/space\/([A-Za-z0-9_-]+)/);
+      if (spaceMatch) return `https://my.matterport.com/show/?m=${spaceMatch[1]}`;
       return u;
     }
     // Sketchfab: 3d-models/ID → models/ID/embed
@@ -112,6 +114,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<Apartment>>({});
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewOriginalUrl, setPreviewOriginalUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // При загрузке страницы всегда обновляем без кэша для получения актуальных данных
@@ -903,7 +906,12 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                     {/* Single unified Preview zone: label + URL + Preview — one block, one action */}
                     <button
                       type="button"
-                      onClick={() => url && setPreviewUrl(getEmbedPreviewUrl(url))}
+                      onClick={() => {
+                        if (url) {
+                          setPreviewUrl(getEmbedPreviewUrl(url));
+                          setPreviewOriginalUrl(url);
+                        }
+                      }}
                       disabled={!url}
                       className="flex min-h-[80px] flex-1 cursor-pointer items-center gap-4 rounded-xl rounded-r-none border-0 bg-gradient-to-r from-blue-50 to-blue-100/80 p-4 text-left transition hover:from-blue-100 hover:to-blue-100 disabled:cursor-default disabled:opacity-50 sm:min-h-0"
                       title={url ? 'Preview 3D' : undefined}
@@ -1003,7 +1011,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
       {previewUrl && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setPreviewUrl(null)}
+          onClick={() => { setPreviewUrl(null); setPreviewOriginalUrl(null); }}
           role="dialog"
           aria-modal="true"
           aria-label="Preview"
@@ -1016,7 +1024,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
               <span className="text-sm font-medium text-gray-700">3D Preview</span>
               <button
                 type="button"
-                onClick={() => setPreviewUrl(null)}
+                onClick={() => { setPreviewUrl(null); setPreviewOriginalUrl(null); }}
                 className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                 aria-label="Close"
               >
@@ -1031,9 +1039,25 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                 title="3D Preview"
                 className="absolute inset-0 h-full w-full border-0"
                 allowFullScreen
-                allow="autoplay; fullscreen; xr-spatial-tracking"
+                allow="autoplay; fullscreen; web-share; xr-spatial-tracking"
               />
             </div>
+            {previewOriginalUrl && (
+              <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
+                <p className="mb-2 text-xs text-gray-500">
+                  If the preview is blocked (Matterport allows embedding only from certain sites), open the 3D tour in a new tab:
+                </p>
+                <a
+                  href={previewOriginalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Open 3D tour in new tab
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                </a>
+              </div>
+            )}
           </div>
         </div>
       )}
