@@ -898,54 +898,47 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                 ].map(({ key, label, url }) => (
                   <div
                     key={key}
-                    className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                    className="flex flex-col sm:flex-row gap-0 overflow-hidden rounded-xl border border-gray-200 shadow-sm"
                   >
-                    <div className="min-w-0 flex-1">
-                      <span className="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-0.5">
-                        {label}
-                      </span>
-                      {url ? (
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium text-blue-600 hover:text-blue-800 truncate block"
-                          title={url}
-                        >
-                          {truncateUrl(url, 56)}
-                        </a>
-                      ) : (
-                        <span className="text-sm text-gray-400">—</span>
-                      )}
-                    </div>
-                    <div className="flex shrink-0 gap-2">
+                    {/* Single unified Preview zone: label + URL + Preview — one block, one action */}
+                    <button
+                      type="button"
+                      onClick={() => url && setPreviewUrl(getEmbedPreviewUrl(url))}
+                      disabled={!url}
+                      className="flex min-h-[80px] flex-1 cursor-pointer items-center gap-4 rounded-xl rounded-r-none border-0 bg-gradient-to-r from-blue-50 to-blue-100/80 p-4 text-left transition hover:from-blue-100 hover:to-blue-100 disabled:cursor-default disabled:opacity-50 sm:min-h-0"
+                      title={url ? 'Preview 3D' : undefined}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-xs font-medium uppercase tracking-wide text-blue-700/90">
+                          {label}
+                        </span>
+                        {url ? (
+                          <span className="mt-0.5 block text-sm font-medium text-gray-900 truncate">
+                            {truncateUrl(url, 52)}
+                          </span>
+                        ) : (
+                          <span className="mt-0.5 text-sm text-gray-500">—</span>
+                        )}
+                      </div>
                       {url && (
-                        <>
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800"
-                          >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            Open
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => setPreviewUrl(getEmbedPreviewUrl(url))}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
-                          >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            Preview
-                          </button>
-                        </>
+                        <span className="hidden shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white sm:inline-block">
+                          Preview
+                        </span>
                       )}
-                    </div>
+                    </button>
+                    {url && (
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex shrink-0 items-center justify-center gap-2 border-l border-gray-200 bg-gray-50 px-5 py-4 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        Open
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>
