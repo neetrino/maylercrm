@@ -5,7 +5,7 @@ import LogoutButton from '@/components/layout/LogoutButton';
 import SidebarNav from '@/components/layout/SidebarNav';
 
 const LOGO_URL =
-  'https://26l5rtuqulppomse.public.blob.vercel-storage.com/meluvis-logo.svg';
+  'https://pub-02e4900b528c4215ba0bfc3cf1e9934e.r2.dev/meluvis-logo.svg';
 
 export default async function DashboardLayout({
   children,
