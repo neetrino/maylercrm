@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import FileUpload from './FileUpload';
 
-/** Преобразует ссылку на 3D (Matterport, Sketchfab) в URL для iframe-превью */
+/** Converts 3D link (Matterport, Sketchfab) to iframe embed URL for preview */
 function getEmbedPreviewUrl(url: string): string {
   try {
     const u = url.trim();
-    // Matterport: show/?m=ID — в iframe можно использовать как есть или embed?m=ID
+    // Matterport: embed?m=ID
     if (u.includes('matterport.com')) {
       const match = u.match(/[?&]m=([^&]+)/);
       if (match) return `https://my.matterport.com/embed?m=${match[1]}`;
@@ -846,7 +846,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
 
       {activeTab === 'links' && (
         <div className="space-y-6">
-          {/* Links Section — карточки ссылок с превью */}
+          {/* Links Section */}
           <div className="card p-6">
             <h2 className="mb-4 text-lg font-semibold text-gray-900">Links</h2>
 
@@ -951,33 +951,46 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
               </div>
             )}
 
-            <div className="mt-6">
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Floorplan Distribution (max 500 characters)
-                </label>
-                {editing ? (
-                  <>
-                    <textarea
-                      value={formData.floorplanDistribution || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          floorplanDistribution: e.target.value || null,
-                        })
-                      }
-                      maxLength={500}
-                      rows={4}
-                      className="input-field"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      {formData.floorplanDistribution?.length || 0}/500
-                    </p>
-                  </>
-                ) : (
-                  <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
-                    {apartment.floorplanDistribution || '-'}
+            {/* Floorplan Distribution */}
+            <div className="mt-8 rounded-2xl border-2 border-blue-200/80 bg-gradient-to-br from-blue-50/90 to-blue-50/70 p-5 shadow-sm">
+              <div className="mb-3 flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H9a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                  </svg>
+                </div>
+                <h3 className="text-base font-semibold text-gray-900">
+                  Floor plan description
+                </h3>
+              </div>
+              {editing ? (
+                <>
+                  <textarea
+                    value={formData.floorplanDistribution || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        floorplanDistribution: e.target.value || null,
+                      })
+                    }
+                    maxLength={500}
+                    rows={5}
+                    placeholder="e.g. living room 24 m², kitchen 12 m², 2 bedrooms..."
+                    className="w-full rounded-xl border border-blue-200 bg-white px-4 py-3 text-gray-900 shadow-inner placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/30"
+                  />
+                  <p className="mt-2 text-right text-sm font-medium text-blue-700/80">
+                    {formData.floorplanDistribution?.length || 0} / 500
                   </p>
-                )}
+                </>
+              ) : (
+                <div className="rounded-xl border border-blue-100 bg-white/80 px-4 py-3">
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">
+                    {apartment.floorplanDistribution || (
+                      <span className="text-gray-400">No description</span>
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -993,7 +1006,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
         </div>
       )}
 
-      {/* Модальное превью 3D (iframe) */}
+      {/* 3D preview modal (iframe) */}
       {previewUrl && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
