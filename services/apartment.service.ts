@@ -6,6 +6,7 @@ export const apartmentService = {
   async getAll(filters?: {
     buildingId?: number;
     status?: ApartmentStatus;
+    search?: string;
     page?: number;
     limit?: number;
     sortBy?: string;
@@ -15,10 +16,7 @@ export const apartmentService = {
     const limit = Math.min(filters?.limit || 21, 100);
     const skip = (page - 1) * limit;
 
-    const where: {
-      buildingId?: number;
-      status?: ApartmentStatus;
-    } = {};
+    const where: Prisma.ApartmentWhereInput = {};
 
     if (filters?.buildingId) {
       where.buildingId = filters.buildingId;
@@ -26,6 +24,16 @@ export const apartmentService = {
 
     if (filters?.status) {
       where.status = filters.status;
+    }
+
+    const searchTrimmed = filters?.search?.trim();
+    if (searchTrimmed) {
+      where.OR = [
+        { apartmentNo: { contains: searchTrimmed, mode: 'insensitive' } },
+        { building: { name: { contains: searchTrimmed, mode: 'insensitive' } } },
+        { building: { district: { name: { contains: searchTrimmed, mode: 'insensitive' } } } },
+        { ownershipName: { contains: searchTrimmed, mode: 'insensitive' } },
+      ];
     }
 
     // Определяем поле и порядок сортировки

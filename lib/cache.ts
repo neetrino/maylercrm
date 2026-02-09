@@ -116,6 +116,7 @@ export const cacheKeys = {
   apartmentsList: (params: {
     buildingId?: number;
     status?: string;
+    search?: string;
     page?: number;
     limit?: number;
     sortBy?: string;
@@ -123,10 +124,11 @@ export const cacheKeys = {
   }) => {
     const b = params.buildingId ?? 'all';
     const s = params.status ?? 'all';
+    const q = params.search?.trim() ?? '';
     const p = params.page ?? 1;
     const l = params.limit ?? 21;
     const sort = params.sortBy ?? 'apartmentNo';
     const order = params.sortOrder ?? 'asc';
-    return `apartments:list:${b}:${s}:${p}:${l}:${sort}:${order}`;
+    return `apartments:list:${b}:${s}:${q}:${p}:${l}:${sort}:${order}`;
   },
 };
