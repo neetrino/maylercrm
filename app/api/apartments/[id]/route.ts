@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { apartmentService } from '@/services/apartment.service';
 import { updateApartmentSchema } from '@/lib/validations';
-import { invalidateCache, cacheKeys } from '@/lib/cache';
+import { invalidateCache, cacheKeys, cacheTags } from '@/lib/cache';
 import { z } from 'zod';
 
 export async function GET(
@@ -90,13 +90,16 @@ export async function PUT(
     // Получаем обновленную квартиру в правильном формате с пересчитанными полями
     const updatedApartment = await apartmentService.getById(id);
     
-    // Инвалидируем кеш dashboard при обновлении apartment
-    invalidateCache([
-      cacheKeys.dashboard.summary,
-      cacheKeys.dashboard.financial,
-      cacheKeys.dashboard.timeline,
-    ]);
-    
+    // Инвалидируем кеш dashboard и списка квартир при обновлении apartment
+    invalidateCache(
+      [
+        cacheKeys.dashboard.summary,
+        cacheKeys.dashboard.financial,
+        cacheKeys.dashboard.timeline,
+      ],
+      [cacheTags.apartmentsList]
+    );
+
     // Инвалидируем кеш buildings если изменился district
     if (currentApartment && updatedApartment) {
       const currentDistrictId = currentApartment.district_id;
@@ -151,18 +154,18 @@ export async function DELETE(
     
     await apartmentService.delete(id);
     
-    // Инвалидируем кеш dashboard при удалении apartment
-    invalidateCache([
-      cacheKeys.dashboard.summary,
-      cacheKeys.dashboard.financial,
-      cacheKeys.dashboard.timeline,
-    ]);
-    
-    // Инвалидируем кеш buildings если нужно
+    // Инвалидируем кеш dashboard и списка квартир при удалении apartment
+    invalidateCache(
+      [
+        cacheKeys.dashboard.summary,
+        cacheKeys.dashboard.financial,
+        cacheKeys.dashboard.timeline,
+      ],
+      [cacheTags.apartmentsList]
+    );
+
     if (apartment) {
-      invalidateCache([
-        cacheKeys.buildings(apartment.district_id),
-      ]);
+      invalidateCache([cacheKeys.buildings(apartment.district_id)]);
     }
     
     return NextResponse.json({ message: 'Apartment deleted' }, { status: 200 });

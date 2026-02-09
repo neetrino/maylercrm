@@ -119,7 +119,7 @@ export default function ApartmentsList() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 50,
+    limit: 21,
     total: 0,
     total_pages: 0,
   });
@@ -152,7 +152,7 @@ export default function ApartmentsList() {
   const fetchApartments = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
-      let url = `/api/apartments?page=${page}&limit=50&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+      let url = `/api/apartments?page=${page}&limit=21&sortBy=${sortBy}&sortOrder=${sortOrder}`;
       if (selectedBuilding) {
         url += `&buildingId=${selectedBuilding}`;
       }
@@ -163,7 +163,7 @@ export default function ApartmentsList() {
       if (!response.ok) throw new Error('Failed to load');
       const data = await response.json();
       setApartments(data.items || []);
-      setPagination(data.pagination || { page: 1, limit: 50, total: 0, total_pages: 0 });
+      setPagination(data.pagination || { page: 1, limit: 21, total: 0, total_pages: 0 });
     } catch (err) {
       setError('Failed to load apartments');
       console.error(err);
@@ -177,14 +177,15 @@ export default function ApartmentsList() {
     fetchBuildings();
   }, []);
 
+  // При смене фильтров сбрасываем на первую страницу
   useEffect(() => {
     setCurrentPage(1);
-    fetchApartments(1);
-  }, [selectedBuilding, selectedStatus, sortBy, sortOrder, fetchApartments]);
+  }, [selectedBuilding, selectedStatus, sortBy, sortOrder]);
 
+  // Один запрос списка: при загрузке и при смене страницы/фильтров (без двойного вызова при монтировании)
   useEffect(() => {
     fetchApartments(currentPage);
-  }, [currentPage, fetchApartments]);
+  }, [currentPage, selectedBuilding, selectedStatus, sortBy, sortOrder, fetchApartments]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {

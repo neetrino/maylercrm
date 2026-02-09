@@ -12,7 +12,7 @@ export const apartmentService = {
     sortOrder?: 'asc' | 'desc';
   }) {
     const page = filters?.page || 1;
-    const limit = Math.min(filters?.limit || 50, 100);
+    const limit = Math.min(filters?.limit || 21, 100);
     const skip = (page - 1) * limit;
 
     const where: {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { apartmentService } from '@/services/apartment.service';
 import { updateApartmentStatusSchema } from '@/lib/validations';
-import { invalidateCache, cacheKeys } from '@/lib/cache';
+import { invalidateCache, cacheKeys, cacheTags } from '@/lib/cache';
 import { z } from 'zod';
 
 export async function PUT(
@@ -77,12 +77,15 @@ export async function PUT(
       );
     }
 
-    // Инвалидируем кеш dashboard при изменении статуса (критично!)
-    invalidateCache([
-      cacheKeys.dashboard.summary,
-      cacheKeys.dashboard.financial,
-      cacheKeys.dashboard.timeline,
-    ]);
+    // Инвалидируем кеш dashboard и списка квартир при изменении статуса
+    invalidateCache(
+      [
+        cacheKeys.dashboard.summary,
+        cacheKeys.dashboard.financial,
+        cacheKeys.dashboard.timeline,
+      ],
+      [cacheTags.apartmentsList]
+    );
 
     return NextResponse.json({
       id: apartment.id,
