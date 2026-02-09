@@ -37,8 +37,12 @@ NEXTAUTH_SECRET="your-secret-key-here"
 # API
 API_TOKEN="your-api-token-for-external-systems"
 
-# Vercel Blob Storage (если используется)
-BLOB_READ_WRITE_TOKEN="your-blob-token"
+# Cloudflare R2 (хранение файлов)
+R2_ACCOUNT_ID="..."
+R2_ACCESS_KEY_ID="..."
+R2_SECRET_ACCESS_KEY="..."
+R2_BUCKET_NAME="meluviscrm"
+R2_PUBLIC_URL="https://pub-xxxx.r2.dev"
 ```
 
 **Важно:** Использовать `.env.example` как шаблон, но не коммитить реальные значения.

@@ -73,9 +73,9 @@ API_TOKEN="meluvis_api_token_abc123xyz789"
 
 ### Опциональные переменные
 
-#### BLOB_READ_WRITE_TOKEN
-**Описание:** Токен для Vercel Blob Storage (если используется загрузка файлов)  
-**Получение:** Vercel Dashboard → Storage → Blob
+#### Cloudflare R2 (хранение файлов)
+**Переменные:** `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`  
+**Описание:** Обязательны для загрузки и удаления вложений. Подробнее: `Documents/R2-MIGRATION.md`
 
 #### NODE_ENV
 **Описание:** Окружение Node.js  
