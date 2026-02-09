@@ -1,4 +1,4 @@
-import { unstable_cache } from 'next/cache';
+import { unstable_cache, revalidateTag } from 'next/cache';
 
 /**
  * Утилита для кеширования данных
@@ -51,19 +51,20 @@ export async function getCachedData<T>(
 }
 
 /**
- * Инвалидировать кеш по ключу
- * 
+ * Инвалидировать кеш по ключу и/или по тегам
+ *
  * @param keys - ключи кеша для инвалидации
+ * @param tags - теги для инвалидации (revalidateTag) — сбрасывает все закешированные ответы с этим тегом
  */
-export function invalidateCache(keys: string[]): void {
-  console.log(`[Cache] Invalidating cache for keys: ${keys.join(', ')}`);
-  keys.forEach((key) => {
-    cacheInvalidationKeys.add(key);
-  });
-  
-  // В будущем здесь можно добавить инвалидацию через revalidateTag
-  // import { revalidateTag } from 'next/cache';
-  // tags.forEach(tag => revalidateTag(tag));
+export function invalidateCache(keys: string[], tags?: string[]): void {
+  if (keys.length) {
+    console.log(`[Cache] Invalidating cache for keys: ${keys.join(', ')}`);
+    keys.forEach((key) => cacheInvalidationKeys.add(key));
+  }
+  if (tags?.length) {
+    console.log(`[Cache] Revalidating tags: ${tags.join(', ')}`);
+    tags.forEach((tag) => revalidateTag(tag));
+  }
 }
 
 /**
@@ -85,6 +86,11 @@ export async function invalidateCacheByTags(tags: string[]): Promise<void> {
 /**
  * Генераторы ключей кеша для разных endpoints
  */
+/** Теги для групповой инвалидации кеша (revalidateTag) */
+export const cacheTags = {
+  apartmentsList: 'apartments-list',
+} as const;
+
 export const cacheKeys = {
   dashboard: {
     summary: 'dashboard:summary',
@@ -105,5 +111,24 @@ export const cacheKeys = {
       return `apartments:status:${status}`;
     }
     return 'apartments:all';
+  },
+  /** Ключ для кеша списка квартир (GET /api/apartments) по параметрам запроса */
+  apartmentsList: (params: {
+    buildingId?: number;
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: string;
+  }) => {
+    const b = params.buildingId ?? 'all';
+    const s = params.status ?? 'all';
+    const q = params.search?.trim() ?? '';
+    const p = params.page ?? 1;
+    const l = params.limit ?? 21;
+    const sort = params.sortBy ?? 'apartmentNo';
+    const order = params.sortOrder ?? 'asc';
+    return `apartments:list:${b}:${s}:${q}:${p}:${l}:${sort}:${order}`;
   },
 };

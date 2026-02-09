@@ -112,6 +112,8 @@ export default function ApartmentsList() {
   const [error, setError] = useState('');
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState(''); // для отображения в инпуте (с debounce)
   const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -119,7 +121,7 @@ export default function ApartmentsList() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 50,
+    limit: 21,
     total: 0,
     total_pages: 0,
   });
@@ -152,39 +154,51 @@ export default function ApartmentsList() {
   const fetchApartments = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
-      let url = `/api/apartments?page=${page}&limit=50&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+      let url = `/api/apartments?page=${page}&limit=21&sortBy=${sortBy}&sortOrder=${sortOrder}`;
       if (selectedBuilding) {
         url += `&buildingId=${selectedBuilding}`;
       }
       if (selectedStatus) {
         url += `&status=${selectedStatus}`;
       }
+      if (searchQuery.trim()) {
+        url += `&search=${encodeURIComponent(searchQuery.trim())}`;
+      }
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to load');
       const data = await response.json();
       setApartments(data.items || []);
-      setPagination(data.pagination || { page: 1, limit: 50, total: 0, total_pages: 0 });
+      setPagination(data.pagination || { page: 1, limit: 21, total: 0, total_pages: 0 });
     } catch (err) {
       setError('Failed to load apartments');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [sortBy, sortOrder, selectedBuilding, selectedStatus]);
+  }, [sortBy, sortOrder, selectedBuilding, selectedStatus, searchQuery]);
 
   useEffect(() => {
     fetchDistricts();
     fetchBuildings();
   }, []);
 
+  // Debounce поиска: обновляем searchQuery через 300ms после последнего ввода
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  // При смене фильтров сбрасываем на первую страницу
   useEffect(() => {
     setCurrentPage(1);
-    fetchApartments(1);
-  }, [selectedBuilding, selectedStatus, sortBy, sortOrder, fetchApartments]);
+  }, [selectedBuilding, selectedStatus, searchQuery, sortBy, sortOrder]);
 
+  // Один запрос списка: при загрузке и при смене страницы/фильтров (без двойного вызова при монтировании)
   useEffect(() => {
     fetchApartments(currentPage);
-  }, [currentPage, fetchApartments]);
+  }, [currentPage, selectedBuilding, selectedStatus, searchQuery, sortBy, sortOrder, fetchApartments]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
@@ -356,6 +370,19 @@ export default function ApartmentsList() {
 
         {/* Filters */}
         <div className="card flex flex-wrap items-end gap-4 p-4">
+          <div className="w-full min-w-[200px] max-w-md">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Search
+            </label>
+            <input
+              type="search"
+              placeholder="No., building, district, owner..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="input-field"
+              aria-label="Search apartments"
+            />
+          </div>
           <div className="flex-1 min-w-[200px]">
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Building
@@ -422,7 +449,20 @@ export default function ApartmentsList() {
       {/* Empty state */}
       {apartments.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-gray-500">No apartments found. Create the first apartment.</p>
+          <p className="text-gray-500">
+            {searchQuery.trim()
+              ? 'No apartments match your search. Try different keywords or clear the search.'
+              : 'No apartments found. Create the first apartment.'}
+          </p>
+          {searchQuery.trim() && (
+            <button
+              type="button"
+              onClick={() => { setSearchInput(''); setSearchQuery(''); }}
+              className="mt-3 text-sm text-blue-600 hover:underline"
+            >
+              Clear search
+            </button>
+          )}
         </div>
       ) : viewMode === 'grid' ? (
         /* Cards Grid View */

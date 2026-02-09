@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { apartmentService } from '@/services/apartment.service';
 import { createApartmentSchema } from '@/lib/validations';
-import { invalidateCache, cacheKeys } from '@/lib/cache';
+import { getCachedData, invalidateCache, cacheKeys, cacheTags } from '@/lib/cache';
 import { z } from 'zod';
+
+const CACHE_REVALIDATE_SEC = 30;
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,6 +18,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const buildingId = searchParams.get('buildingId');
     const status = searchParams.get('status');
+    const search = searchParams.get('search') ?? searchParams.get('q') ?? '';
     const page = searchParams.get('page');
     const limit = searchParams.get('limit');
     const sortBy = searchParams.get('sortBy');
@@ -26,13 +29,30 @@ export async function GET(request: NextRequest) {
       status: status
         ? (status.toUpperCase() as 'UPCOMING' | 'AVAILABLE' | 'RESERVED' | 'SOLD')
         : undefined,
+      search: search.trim() || undefined,
       page: page ? parseInt(page) : undefined,
       limit: limit ? parseInt(limit) : undefined,
       sortBy: sortBy || undefined,
       sortOrder: (sortOrder as 'asc' | 'desc') || undefined,
     };
 
-    const result = await apartmentService.getAll(filters);
+    const cacheKey = cacheKeys.apartmentsList({
+      buildingId: filters.buildingId,
+      status: filters.status,
+      search: filters.search,
+      page: filters.page,
+      limit: filters.limit,
+      sortBy: filters.sortBy,
+      sortOrder: filters.sortOrder,
+    });
+
+    const result = await getCachedData(
+      cacheKey,
+      () => apartmentService.getAll(filters),
+      CACHE_REVALIDATE_SEC,
+      [cacheTags.apartmentsList]
+    );
+
     return NextResponse.json(result);
   } catch (error) {
     console.error('[API] Error fetching apartments:', error);
@@ -56,13 +76,16 @@ export async function POST(request: NextRequest) {
 
     const apartment = await apartmentService.create(validatedData);
     
-    // Инвалидируем кеш dashboard при создании apartment
-    invalidateCache([
-      cacheKeys.dashboard.summary,
-      cacheKeys.dashboard.financial,
-      cacheKeys.dashboard.timeline,
-      cacheKeys.buildings(apartment.building.districtId)
-    ]);
+    // Инвалидируем кеш dashboard и списка квартир при создании apartment
+    invalidateCache(
+      [
+        cacheKeys.dashboard.summary,
+        cacheKeys.dashboard.financial,
+        cacheKeys.dashboard.timeline,
+        cacheKeys.buildings(apartment.building.districtId),
+      ],
+      [cacheTags.apartmentsList]
+    );
     
     return NextResponse.json(apartment, { status: 201 });
   } catch (error) {
