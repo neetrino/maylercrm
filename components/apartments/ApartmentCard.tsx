@@ -5,6 +5,33 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import FileUpload from './FileUpload';
 
+/** Преобразует ссылку на 3D (Matterport, Sketchfab) в URL для iframe-превью */
+function getEmbedPreviewUrl(url: string): string {
+  try {
+    const u = url.trim();
+    // Matterport: show/?m=ID — в iframe можно использовать как есть или embed?m=ID
+    if (u.includes('matterport.com')) {
+      const match = u.match(/[?&]m=([^&]+)/);
+      if (match) return `https://my.matterport.com/embed?m=${match[1]}`;
+      return u;
+    }
+    // Sketchfab: 3d-models/ID → models/ID/embed
+    if (u.includes('sketchfab.com')) {
+      const match = u.match(/3d-models\/([a-f0-9]+)/i) || u.match(/models\/([a-f0-9]+)/i);
+      if (match) return `https://sketchfab.com/models/${match[1]}/embed`;
+      return u;
+    }
+    return u;
+  } catch {
+    return url;
+  }
+}
+
+function truncateUrl(url: string, maxLen = 50): string {
+  if (url.length <= maxLen) return url;
+  return url.slice(0, maxLen - 3) + '...';
+}
+
 type Attachment = {
   id: number;
   fileType: string;
@@ -84,6 +111,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'links'>('overview');
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<Apartment>>({});
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // При загрузке страницы всегда обновляем без кэша для получения актуальных данных
@@ -818,13 +846,14 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
 
       {activeTab === 'links' && (
         <div className="space-y-6">
-          {/* Links Section */}
+          {/* Links Section — карточки ссылок с превью */}
           <div className="card p-6">
             <h2 className="mb-4 text-lg font-semibold text-gray-900">Links</h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Matter Link</label>
-                {editing ? (
+
+            {editing ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Matter Link</label>
                   <input
                     type="url"
                     value={formData.matterLink || ''}
@@ -834,26 +863,9 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                     className="input-field"
                     placeholder="https://..."
                   />
-                ) : (
-                  <p className="mt-1 text-sm text-gray-900">
-                    {apartment.matterLink ? (
-                      <a
-                        href={apartment.matterLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline break-all"
-                      >
-                        {apartment.matterLink}
-                      </a>
-                    ) : (
-                      '-'
-                    )}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Exterior Link</label>
-                {editing ? (
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Exterior Link</label>
                   <input
                     type="url"
                     value={formData.exteriorLink || ''}
@@ -863,26 +875,9 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                     className="input-field"
                     placeholder="https://..."
                   />
-                ) : (
-                  <p className="mt-1 text-sm text-gray-900">
-                    {apartment.exteriorLink ? (
-                      <a
-                        href={apartment.exteriorLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline break-all"
-                      >
-                        {apartment.exteriorLink}
-                      </a>
-                    ) : (
-                      '-'
-                    )}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Exterior Link 2</label>
-                {editing ? (
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Exterior Link 2</label>
                   <input
                     type="url"
                     value={formData.exteriorLink2 || ''}
@@ -892,24 +887,71 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                     className="input-field"
                     placeholder="https://..."
                   />
-                ) : (
-                  <p className="mt-1 text-sm text-gray-900">
-                    {apartment.exteriorLink2 ? (
-                      <a
-                        href={apartment.exteriorLink2}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline break-all"
-                      >
-                        {apartment.exteriorLink2}
-                      </a>
-                    ) : (
-                      '-'
-                    )}
-                  </p>
-                )}
+                </div>
               </div>
-              <div className="col-span-2">
+            ) : (
+              <div className="space-y-3">
+                {[
+                  { key: 'matter', label: 'Matter Link', url: apartment.matterLink },
+                  { key: 'exterior', label: 'Exterior Link', url: apartment.exteriorLink },
+                  { key: 'exterior2', label: 'Exterior Link 2', url: apartment.exteriorLink2 },
+                ].map(({ key, label, url }) => (
+                  <div
+                    key={key}
+                    className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-0.5">
+                        {label}
+                      </span>
+                      {url ? (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-blue-600 hover:text-blue-800 truncate block"
+                          title={url}
+                        >
+                          {truncateUrl(url, 56)}
+                        </a>
+                      ) : (
+                        <span className="text-sm text-gray-400">—</span>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      {url && (
+                        <>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            Open
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewUrl(getEmbedPreviewUrl(url))}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Preview
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6">
                 <label className="mb-1 block text-sm font-medium text-gray-700">
                   Floorplan Distribution (max 500 characters)
                 </label>
@@ -936,7 +978,6 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                     {apartment.floorplanDistribution || '-'}
                   </p>
                 )}
-              </div>
             </div>
           </div>
 
@@ -948,6 +989,45 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
               attachments={normalizeAttachmentsForUpload(apartment.attachments)}
               onUploadSuccess={refreshAfterUpload}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Модальное превью 3D (iframe) */}
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setPreviewUrl(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Preview"
+        >
+          <div
+            className="relative flex max-h-[85vh] w-full max-w-4xl flex-col rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+              <span className="text-sm font-medium text-gray-700">3D Preview</span>
+              <button
+                type="button"
+                onClick={() => setPreviewUrl(null)}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="relative min-h-[400px] flex-1 overflow-hidden rounded-b-2xl">
+              <iframe
+                src={previewUrl}
+                title="3D Preview"
+                className="absolute inset-0 h-full w-full border-0"
+                allowFullScreen
+                allow="autoplay; fullscreen; xr-spatial-tracking"
+              />
+            </div>
           </div>
         </div>
       )}
