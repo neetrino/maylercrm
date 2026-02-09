@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { attachmentService } from '@/services/attachment.service';
-import { del } from '@vercel/blob';
+import { deleteObject, getKeyFromFileUrl, isR2Url } from '@/lib/r2';
 
 export async function DELETE(
   request: NextRequest,
@@ -35,18 +35,17 @@ export async function DELETE(
       );
     }
 
-    // Удаляем файл из Vercel Blob
-    // Проверяем, что это URL из Blob (начинается с https://)
-    if (attachment.fileUrl.startsWith('https://')) {
+    // Удаляем файл из R2 (если это наш R2 URL)
+    const r2Key = getKeyFromFileUrl(attachment.fileUrl);
+    if (isR2Url(attachment.fileUrl) && r2Key) {
       try {
-        await del(attachment.fileUrl);
+        await deleteObject(r2Key);
       } catch (error) {
-        console.error('[API] Error deleting blob:', error);
-        // Продолжаем удаление записи из БД даже если файл не найден в Blob
+        console.error('[API] Error deleting from R2:', error);
+        // Продолжаем удаление записи из БД даже если объект не найден
       }
-    } else {
-      // Для старых файлов, сохранённых локально (миграция)
-      console.warn('[API] Old local file detected, skipping blob deletion:', attachment.fileUrl);
+    } else if (!attachment.fileUrl.startsWith('/')) {
+      console.warn('[API] Non-R2 URL, skipping object deletion:', attachment.fileUrl);
     }
 
     // Удаляем запись из БД

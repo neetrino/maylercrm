@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { attachmentService } from '@/services/attachment.service';
 import { FileType } from '@prisma/client';
-import { put } from '@vercel/blob';
+import { putObject } from '@/lib/r2';
 import crypto from 'crypto';
 
 // Максимальный размер файла: 10MB
@@ -95,19 +95,15 @@ export async function POST(
     // Вычисляем MD5 хеш файла
     const md5Hash = await calculateMD5(file);
 
-    // Генерируем уникальное имя файла для Blob
+    // Уникальное имя файла в R2
     const timestamp = Date.now();
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const blobFileName = `apartments/${apartmentId}/${fileType.toLowerCase()}/${timestamp}_${sanitizedFileName}`;
+    const key = `apartments/${apartmentId}/${fileType.toLowerCase()}/${timestamp}_${sanitizedFileName}`;
 
-    // Загружаем файл в Vercel Blob
-    const blob = await put(blobFileName, file, {
-      access: 'public',
-      contentType: file.type,
-    });
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    // Используем URL из Blob
-    const fileUrl = blob.url;
+    const { url: fileUrl } = await putObject(key, buffer, file.type);
 
     // Сохраняем в БД с MD5 хешем
     const attachment = await attachmentService.create(
