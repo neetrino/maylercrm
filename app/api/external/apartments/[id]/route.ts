@@ -42,6 +42,7 @@ export async function GET(
       id: apartment.id,
       apartment_no: apartment.apartmentNo,
       apartment_type: apartment.apartmentType,
+      floor: apartment.floor,
       status: apartment.status.toLowerCase(),
       sqm: apartment.sqm,
       price_sqm: apartment.price_sqm,

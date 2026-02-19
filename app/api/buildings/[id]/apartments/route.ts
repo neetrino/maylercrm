@@ -59,6 +59,7 @@ export async function GET(
       id: apt.id,
       apartment_no: apt.apartmentNo,
       apartment_type: apt.apartmentType,
+      floor: apt.floor,
       status: apt.status.toLowerCase(),
       sqm: apt.sqm,
       price_sqm: apt.price_sqm,
