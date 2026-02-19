@@ -83,6 +83,7 @@ export const apartmentService = {
           buildingId: true,
           apartmentNo: true,
           apartmentType: true,
+          floor: true,
           status: true,
           sqm: true,
           priceSqm: true,
@@ -210,6 +211,7 @@ export const apartmentService = {
         buildingId: true,
         apartmentNo: true,
         apartmentType: true,
+        floor: true,
         status: true,
         sqm: true,
         priceSqm: true,
@@ -291,6 +293,7 @@ export const apartmentService = {
     buildingId: number;
     apartmentNo: string;
     apartmentType?: number;
+    floor?: number;
     sqm?: number;
     priceSqm?: number;
     status?: ApartmentStatus;
@@ -331,6 +334,7 @@ export const apartmentService = {
         buildingId: data.buildingId,
         apartmentNo: data.apartmentNo.trim(),
         apartmentType: data.apartmentType,
+        floor: data.floor,
         sqm: data.sqm,
         priceSqm: data.priceSqm,
         totalPrice: totalPrice,

@@ -22,6 +22,7 @@ export default function ApartmentForm({
     buildingId: buildings[0]?.id || 0,
     apartmentNo: '',
     apartmentType: '',
+    floor: '',
     sqm: '',
     priceSqm: '',
     status: 'UPCOMING',
@@ -44,6 +45,7 @@ export default function ApartmentForm({
           apartmentType: formData.apartmentType
             ? parseInt(formData.apartmentType)
             : undefined,
+          floor: formData.floor ? parseInt(formData.floor, 10) : undefined,
           sqm: formData.sqm ? parseFloat(formData.sqm) : undefined,
           priceSqm: formData.priceSqm ? parseFloat(formData.priceSqm) : undefined,
           status: formData.status,
@@ -120,6 +122,20 @@ export default function ApartmentForm({
               value={formData.apartmentType}
               onChange={(e) =>
                 setFormData({ ...formData, apartmentType: e.target.value })
+              }
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Floor
+            </label>
+            <input
+              type="number"
+              value={formData.floor}
+              onChange={(e) =>
+                setFormData({ ...formData, floor: e.target.value })
               }
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
             />

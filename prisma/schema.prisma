@@ -62,6 +62,7 @@ model Apartment {
   buildingId            Int           @map("building_id")
   apartmentNo           String        @map("apartment_no")
   apartmentType         Int?          @map("apartment_type")
+  floor                 Int?          @map("floor")
   status                ApartmentStatus @default(UPCOMING)
   dealDate              DateTime?     @map("deal_date") @db.Date
   ownershipName         String?       @map("ownership_name") @db.Text

@@ -76,6 +76,7 @@ type Apartment = {
   id: number;
   apartmentNo: string;
   apartmentType: number | null;
+  floor: number | null;
   status: string;
   sqm: number | null;
   price_sqm: number | null;
@@ -192,6 +193,10 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
       if (formData.total_paid !== undefined) {
         const totalPaidNum = parseNumber(formData.total_paid);
         apiData.totalPaid = totalPaidNum;
+      }
+      if (formData.floor !== undefined) {
+        const floorNum = parseNumber(formData.floor);
+        apiData.floor = (floorNum === null || floorNum === 0) ? null : floorNum;
       }
       
       // Дата - преобразуем в формат YYYY-MM-DD (без времени)
@@ -530,6 +535,26 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                   Apartment Type
                 </label>
                 <p className="text-base font-medium text-gray-900">{apartment.apartmentType || '-'}</p>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Floor
+                </label>
+                {editing ? (
+                  <input
+                    type="number"
+                    value={formData.floor ?? ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        floor: e.target.value ? parseInt(e.target.value, 10) : null,
+                      })
+                    }
+                    className="input-field"
+                  />
+                ) : (
+                  <p className="text-base font-medium text-gray-900">{apartment.floor ?? '-'}</p>
+                )}
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">

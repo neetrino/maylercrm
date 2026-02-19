@@ -155,6 +155,7 @@ async function main() {
       buildingId: building.id,
       apartmentNo,
       apartmentType: num(row.apartment_type),
+      floor: num(row.floor),
       status,
       salesType,
       sqm: sqm ?? undefined,
@@ -182,6 +183,7 @@ async function main() {
       create: data,
       update: {
         apartmentType: data.apartmentType,
+        floor: data.floor,
         status: data.status,
         salesType: data.salesType,
         sqm: data.sqm,
