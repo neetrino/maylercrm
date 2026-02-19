@@ -24,6 +24,10 @@
 - **[ENVIRONMENT.md](./ENVIRONMENT.md)** - Описание окружений (dev, staging, prod)
 - **[env.example.txt](./env.example.txt)** - Пример файла с переменными окружения
 
+## 📥 Импорт данных
+
+- **[IMPORT.md](./IMPORT.md)** - Документация по импорту: Excel, R2, Matter Link, скрипты
+
 ## 📄 Исходные документы
 
 - **[TZ.md](./TZ.md)** - Техническое задание
