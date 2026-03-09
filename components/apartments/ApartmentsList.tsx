@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { Eye, Link2, Box } from 'lucide-react';
 import type { Building, District } from '@prisma/client';
 import ApartmentForm from './ApartmentForm';
 
@@ -25,37 +27,111 @@ type Apartment = {
   building: Building & { district: District };
   updatedAt: string;
   attachments?: Attachment[];
+  matter_link?: string | null;
+  matterLink?: string | null;
+  landingToken?: string | null;
 };
 
-// Мемоизированный компонент карточки квартиры для оптимизации рендеринга
-const ApartmentCardItem = memo(({ 
-  apt, 
-  onStatusChange, 
-  getStatusColor 
-}: { 
-  apt: Apartment; 
+/** Convert 3D link to embed URL for iframe preview */
+function getEmbedPreviewUrl(url: string): string {
+  try {
+    const u = url.trim();
+    if (u.includes('matterport.com')) {
+      const mMatch = u.match(/[?&]m=([^&]+)/);
+      if (mMatch) return `https://my.matterport.com/show/?m=${mMatch[1]}`;
+      const spaceMatch = u.match(/\/space\/([A-Za-z0-9_-]+)/);
+      if (spaceMatch) return `https://my.matterport.com/show/?m=${spaceMatch[1]}`;
+      return u;
+    }
+    if (u.includes('sketchfab.com')) {
+      const match = u.match(/3d-models\/([a-f0-9]+)/i) || u.match(/models\/([a-f0-9]+)/i);
+      if (match) return `https://sketchfab.com/models/${match[1]}/embed`;
+      return u;
+    }
+    return u;
+  } catch {
+    return url;
+  }
+}
+
+// Мемоизированный компонент карточки квартиры
+const ApartmentCardItem = memo(({
+  apt,
+  onStatusChange,
+  getStatusColor,
+  onOpenPreview,
+  onLandingCopied,
+}: {
+  apt: Apartment;
   onStatusChange: (id: number, status: string) => void;
   getStatusColor: (status: string) => string;
+  onOpenPreview: (url: string) => void;
+  onLandingCopied?: () => void;
 }) => {
+  const router = useRouter();
+  const [landingCopying, setLandingCopying] = useState(false);
+  const [landingJustCopied, setLandingJustCopied] = useState(false);
+  const matterUrl = apt.matter_link ?? apt.matterLink ?? null;
+  const embedUrl = matterUrl ? getEmbedPreviewUrl(matterUrl) : null;
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if user clicked on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-no-nav]')) return;
+    router.push(`/apartments/${apt.id}`);
+  };
+
+  const handleLandingCopy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (landingCopying) return;
+    setLandingCopying(true);
+    try {
+      const res = await fetch(`/api/apartments/${apt.id}/landing`, { method: 'POST' });
+      if (!res.ok) throw new Error('Failed');
+      const { url } = await res.json();
+      await navigator.clipboard.writeText(url);
+      setLandingJustCopied(true);
+      onLandingCopied?.();
+      setTimeout(() => setLandingJustCopied(false), 2000);
+    } catch {
+      alert('Failed to copy landing link');
+    } finally {
+      setLandingCopying(false);
+    }
+  };
+
+  const handlePreviewClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (embedUrl) onOpenPreview(embedUrl);
+  };
+
   return (
-    <div className="card card-hover p-5">
-      <div className="mb-4 flex items-start justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/apartments/${apt.id}`); } }}
+      className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-5 shadow-sm transition-all duration-200 hover:border-gray-300 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+    >
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-lg font-bold text-gray-900 truncate">
             {apt.apartmentNo}
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {apt.building.district.name} - {apt.building.name}
+          <p className="mt-0.5 text-sm text-gray-500 truncate">
+            {apt.building.district.name} — {apt.building.name}
           </p>
         </div>
         <select
+          data-no-nav
           value={apt.status}
-          onChange={(e) => onStatusChange(apt.id, e.target.value)}
-          className={`badge border ${getStatusColor(apt.status)} cursor-pointer text-xs appearance-none bg-right bg-no-repeat pr-8 pl-3 py-1.5 font-medium transition-colors`}
+          onChange={(e) => { e.stopPropagation(); onStatusChange(apt.id, e.target.value); }}
+          className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${getStatusColor(apt.status)} cursor-pointer appearance-none bg-no-repeat pr-6`}
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2 4L6 8L10 4' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-            backgroundPosition: 'right 0.75rem center',
-            paddingRight: '2rem',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2 4L6 8L10 4' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+            backgroundPosition: 'right 0.4rem center',
           }}
         >
           <option value="UPCOMING">Upcoming</option>
@@ -65,48 +141,63 @@ const ApartmentCardItem = memo(({
         </select>
       </div>
 
-      <div className="space-y-3 border-t border-gray-100 pt-4">
-        <div className="flex justify-between text-sm">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-gray-100 pt-4 text-sm">
+        <div className="flex justify-between gap-2">
           <span className="text-gray-500">Area</span>
-          <span className="font-medium text-gray-900">
-            {apt.sqm ? `${apt.sqm} m²` : '-'}
-          </span>
+          <span className="font-medium text-gray-900 tabular-nums">{apt.sqm ? `${apt.sqm} m²` : '—'}</span>
         </div>
-        <div className="flex justify-between text-sm">
+        <div className="flex justify-between gap-2">
           <span className="text-gray-500">Price</span>
-          <span className="font-semibold text-gray-900">
-            {apt.total_price
-              ? `${(apt.total_price / 1000000).toFixed(1)}M AMD`
-              : '-'}
+          <span className="font-semibold text-gray-900 tabular-nums">
+            {apt.total_price ? `${(apt.total_price / 1000000).toFixed(1)}M` : '—'}
           </span>
         </div>
-        <div className="flex justify-between text-sm">
+        <div className="flex justify-between gap-2">
           <span className="text-gray-500">Paid</span>
-          <span className="font-medium text-gray-900">
-            {apt.total_paid
-              ? `${(apt.total_paid / 1000000).toFixed(1)}M AMD`
-              : '-'}
+          <span className="font-medium text-gray-900 tabular-nums">
+            {apt.total_paid ? `${(apt.total_paid / 1000000).toFixed(1)}M` : '—'}
           </span>
         </div>
-        <div className="flex justify-between text-sm">
+        <div className="flex justify-between gap-2">
           <span className="text-gray-500">Balance</span>
-          <span className="font-medium text-gray-900">
-            {apt.balance
-              ? `${(apt.balance / 1000000).toFixed(1)}M AMD`
-              : '-'}
+          <span className="font-medium text-gray-900 tabular-nums">
+            {apt.balance ? `${(apt.balance / 1000000).toFixed(1)}M` : '—'}
           </span>
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-100">
+      <div className="mt-4 pt-4 border-t border-gray-100 flex items-stretch gap-3" data-no-nav>
         <Link
           href={`/apartments/${apt.id}`}
-          className="block w-full rounded-lg bg-gray-50 px-4 py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+          onClick={(e) => e.stopPropagation()}
+          className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
         >
-          View Details
+          <Eye className="h-4 w-4 shrink-0" />
+          <span className="truncate">View Details</span>
         </Link>
+        <button
+          type="button"
+          onClick={handleLandingCopy}
+          disabled={landingCopying}
+          className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-60"
+          title="Copy landing link"
+        >
+          <Link2 className="h-4 w-4 shrink-0" />
+          <span className="truncate">{landingCopying ? '…' : landingJustCopied ? 'Copied!' : 'Landing'}</span>
+        </button>
+        {embedUrl && (
+          <button
+            type="button"
+            onClick={handlePreviewClick}
+            className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
+            title="Open 3D preview"
+          >
+            <Box className="h-4 w-4 shrink-0" />
+            <span className="truncate">3D Preview</span>
+          </button>
+        )}
       </div>
-    </div>
+    </article>
   );
 });
 
@@ -134,6 +225,7 @@ export default function ApartmentsList() {
     total: 0,
     total_pages: 0,
   });
+  const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
   const isAdmin = session?.user?.role === 'ADMIN';
 
   const fetchDistricts = async () => {
@@ -573,6 +665,7 @@ export default function ApartmentsList() {
                                   apt={apt}
                                   onStatusChange={handleStatusChange}
                                   getStatusColor={getStatusColor}
+                                  onOpenPreview={setPreviewModalUrl}
                                 />
                               ))}
                             </div>
@@ -595,6 +688,7 @@ export default function ApartmentsList() {
               apt={apt}
               onStatusChange={handleStatusChange}
               getStatusColor={getStatusColor}
+              onOpenPreview={setPreviewModalUrl}
             />
           ))}
         </div>
@@ -776,6 +870,43 @@ export default function ApartmentsList() {
             >
               Next
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 3D Preview modal */}
+      {previewModalUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setPreviewModalUrl(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="3D preview"
+        >
+          <div
+            className="relative flex h-[85vh] w-full max-w-4xl flex-col rounded-2xl bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2">
+              <span className="text-sm font-medium text-gray-700">3D Preview</span>
+              <button
+                type="button"
+                onClick={() => setPreviewModalUrl(null)}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="relative flex-1 min-h-0">
+              <iframe
+                src={previewModalUrl}
+                title="3D preview"
+                className="absolute inset-0 h-full w-full rounded-b-2xl border-0"
+                allowFullScreen
+                allow="autoplay; fullscreen; xr-spatial-tracking"
+              />
+            </div>
           </div>
         </div>
       )}
