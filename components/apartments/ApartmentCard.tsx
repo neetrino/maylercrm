@@ -268,8 +268,6 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
         apiData.notes = parseString(formData.notes);
       }
 
-      console.log('Sending data to API:', JSON.stringify(apiData, null, 2));
-      
       const response = await fetch(`/api/apartments/${apartmentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -278,10 +276,8 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('API Error:', errorData);
         if (errorData.details && Array.isArray(errorData.details)) {
-          console.error('Validation details:', errorData.details);
-          const errorMessages = errorData.details.map((err: any) => 
+          const errorMessages = errorData.details.map((err: any) =>
             `${err.path.join('.')}: ${err.message}`
           ).join(', ');
           throw new Error(`Validation error: ${errorMessages}`);
@@ -294,7 +290,6 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
       setFormData(updated);
       setEditing(false);
     } catch (err) {
-      console.error('Save error:', err);
       alert(err instanceof Error ? err.message : 'Failed to save changes');
     }
   };

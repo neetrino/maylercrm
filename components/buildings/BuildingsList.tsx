@@ -21,8 +21,8 @@ export default function BuildingsList() {
       if (!response.ok) throw new Error('Failed to load districts');
       const data = await response.json();
       setDistricts(data);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // ignore
     }
   };
 
@@ -36,9 +36,8 @@ export default function BuildingsList() {
       if (!response.ok) throw new Error('Failed to load');
       const data = await response.json();
       setBuildings(data);
-    } catch (err) {
+    } catch {
       setError('Failed to load buildings');
-      console.error(err);
     } finally {
       setLoading(false);
     }

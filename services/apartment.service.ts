@@ -395,12 +395,7 @@ export const apartmentService = {
         select: { dealDate: true, ownershipName: true },
       });
 
-      if (!apartment?.dealDate || !apartment?.ownershipName) {
-        // Не блокируем, но предупреждаем
-        console.warn(
-          `[Apartment Service] Apartment ${id} marked as SOLD without deal_date or ownership_name`
-        );
-      }
+      // Apartment marked SOLD; deal_date/ownership_name may be filled later
     }
 
     return await prisma.apartment.update({
