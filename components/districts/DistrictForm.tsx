@@ -114,7 +114,7 @@ export default function DistrictForm({
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               required
-              pattern="[a-z0-9-]+"
+              pattern="[a-z0-9\-]+"
               className="input-field"
               placeholder="kentron"
             />

@@ -1,28 +1,45 @@
 import { prisma } from '@/lib/prisma';
 import type { Building } from '@prisma/client';
 
+const districtSelect = {
+  id: true,
+  name: true,
+  slug: true,
+};
+
 export const buildingService = {
-  async getAll(districtId?: number): Promise<Building[]> {
-    return await prisma.building.findMany({
-      where: districtId ? { districtId } : undefined,
-      include: {
-        district: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
+  async getAll(districtId?: number) {
+    const where = districtId ? { districtId } : undefined;
+    try {
+      return await prisma.building.findMany({
+        where,
+        include: {
+          district: { select: districtSelect },
+          floorPlans: {
+            select: { id: true, floor: true, fileUrl: true, fileName: true },
+            orderBy: { floor: 'asc' },
           },
         },
-      },
-      orderBy: { name: 'asc' },
-    });
+        orderBy: { name: 'asc' },
+      });
+    } catch (e) {
+      // Fallback if floorPlans relation missing (e.g. old Prisma client)
+      return await prisma.building.findMany({
+        where,
+        include: { district: { select: districtSelect } },
+        orderBy: { name: 'asc' },
+      });
+    }
   },
 
-  async getById(id: number): Promise<Building | null> {
+  async getById(id: number) {
     return await prisma.building.findUnique({
       where: { id },
       include: {
         district: true,
+        floorPlans: {
+          orderBy: { floor: 'asc' },
+        },
       },
     });
   },
@@ -76,19 +93,20 @@ export const buildingService = {
 
   async update(
     id: number,
-    data: { name?: string; slug?: string; districtId?: number }
-  ): Promise<Building> {
+    data: { name?: string; slug?: string; districtId?: number; floorsCount?: number | null }
+  ) {
     const updateData: {
       name?: string;
       slug?: string;
       districtId?: number;
+      floorsCount?: number | null;
     } = {};
 
-    if (data.name) {
+    if (data.name !== undefined) {
       updateData.name = data.name.trim();
     }
 
-    if (data.slug) {
+    if (data.slug !== undefined) {
       updateData.slug = data.slug
         .toLowerCase()
         .trim()
@@ -96,17 +114,16 @@ export const buildingService = {
         .replace(/[^a-z0-9-]/g, '');
     }
 
-    if (data.districtId) {
-      // Проверка существования района
+    if (data.districtId !== undefined) {
       const district = await prisma.district.findUnique({
         where: { id: data.districtId },
       });
-
-      if (!district) {
-        throw new Error('Район не найден');
-      }
-
+      if (!district) throw new Error('Район не найден');
       updateData.districtId = data.districtId;
+    }
+
+    if (data.floorsCount !== undefined) {
+      updateData.floorsCount = data.floorsCount;
     }
 
     return await prisma.building.update({
@@ -114,7 +131,29 @@ export const buildingService = {
       data: updateData,
       include: {
         district: true,
+        floorPlans: { orderBy: { floor: 'asc' } },
       },
+    });
+  },
+
+  async createFloorPlan(
+    buildingId: number,
+    floor: number,
+    fileUrl: string,
+    fileName?: string | null
+  ) {
+    return await prisma.buildingFloorPlan.upsert({
+      where: {
+        buildingId_floor: { buildingId, floor },
+      },
+      create: { buildingId, floor, fileUrl, fileName },
+      update: { fileUrl, fileName },
+    });
+  },
+
+  async deleteFloorPlan(buildingId: number, floor: number) {
+    await prisma.buildingFloorPlan.deleteMany({
+      where: { buildingId, floor },
     });
   },
 

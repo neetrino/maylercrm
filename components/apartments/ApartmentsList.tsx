@@ -6,6 +6,13 @@ import { useSession } from 'next-auth/react';
 import type { Building, District } from '@prisma/client';
 import ApartmentForm from './ApartmentForm';
 
+type Attachment = {
+  id: number;
+  fileType: string;
+  fileUrl: string;
+  fileName?: string | null;
+};
+
 type Apartment = {
   id: number;
   apartmentNo: string;
@@ -14,8 +21,10 @@ type Apartment = {
   total_price: number | null;
   total_paid: number | null;
   balance: number | null;
+  floor?: number | null;
   building: Building & { district: District };
   updatedAt: string;
+  attachments?: Attachment[];
 };
 
 // Мемоизированный компонент карточки квартиры для оптимизации рендеринга
@@ -116,7 +125,7 @@ export default function ApartmentsList() {
   const [searchInput, setSearchInput] = useState(''); // для отображения в инпуте (с debounce)
   const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'floor'>('grid');
   const [sortBy, setSortBy] = useState<string>('apartmentNo');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [pagination, setPagination] = useState({
@@ -356,6 +365,21 @@ export default function ApartmentsList() {
               >
                 <span className="text-base">☰</span>
               </button>
+              <button
+                onClick={() => setViewMode('floor')}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  viewMode === 'floor'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                title="Floor view"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="4" y="2" width="16" height="20" rx="1" />
+                  <line x1="4" y1="8" x2="20" y2="8" />
+                  <line x1="4" y1="14" x2="20" y2="14" />
+                </svg>
+              </button>
             </div>
             {isAdmin && (
               <button
@@ -464,6 +488,104 @@ export default function ApartmentsList() {
             </button>
           )}
         </div>
+      ) : viewMode === 'floor' ? (
+        /* Floor view: group by building, then by floor; show floor plan + apartments per floor */
+        (() => {
+          type GroupKey = string;
+          const byBuilding: Record<GroupKey, Apartment[]> = {};
+          apartments.forEach((apt) => {
+            const key = `${apt.building.id}-${apt.building.district.name}-${apt.building.name}`;
+            if (!byBuilding[key]) byBuilding[key] = [];
+            byBuilding[key].push(apt);
+          });
+          const buildingEntries = Object.entries(byBuilding);
+          return (
+            <div className="space-y-10">
+              {buildingEntries.map(([key, buildingApts]) => {
+                const byFloor: Record<number | string, Apartment[]> = {};
+                buildingApts.forEach((apt) => {
+                  const f = apt.floor ?? '—';
+                  const k = typeof f === 'number' ? f : '—';
+                  if (!byFloor[k]) byFloor[k] = [];
+                  byFloor[k].push(apt);
+                });
+                const floorNumbers = Object.keys(byFloor)
+                  .map((k) => (k === '—' ? -Infinity : Number(k)))
+                  .filter((n) => Number.isFinite(n))
+                  .sort((a, b) => a - b);
+                const unknownFloor = byFloor['—'];
+                const sortedFloors = floorNumbers.filter((n) => n !== -Infinity);
+                if (unknownFloor?.length) sortedFloors.push(-Infinity);
+                const firstApt = buildingApts[0];
+                const buildingLabel = firstApt
+                  ? `${firstApt.building.district.name} — ${firstApt.building.name}`
+                  : key;
+                return (
+                  <div key={key} className="card overflow-hidden">
+                    <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                      <h2 className="text-lg font-semibold text-gray-900">{buildingLabel}</h2>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {sortedFloors.map((floorNum) => {
+                        const floorApts = byFloor[floorNum === -Infinity ? '—' : floorNum] ?? [];
+                        const floorLabel = floorNum === -Infinity ? '—' : `Floor ${floorNum}`;
+                        const buildingMeta = buildings.find((b) => b.id === firstApt.building.id) as (Building & { district: District; floorPlans?: { floor: number; fileUrl: string; fileName: string | null }[] }) | undefined;
+                        const buildingFloorPlan = floorNum !== -Infinity && buildingMeta?.floorPlans?.find((fp) => fp.floor === floorNum);
+                        const apartmentFloorPlan = floorApts
+                          .flatMap((a) => (a.attachments ?? []).filter((at) => at.fileType === 'FLOORPLAN'))
+                          .find(Boolean);
+                        const floorPlanUrl = buildingFloorPlan?.fileUrl ?? apartmentFloorPlan?.fileUrl;
+                        const isPdf = floorPlanUrl?.toLowerCase().endsWith('.pdf');
+                        return (
+                          <div key={floorLabel} className="p-6">
+                            <h3 className="mb-3 text-base font-medium text-gray-800">{floorLabel}</h3>
+                            {floorPlanUrl && (
+                              <div className="mb-4 flex flex-col items-center rounded-xl border border-gray-200 bg-gray-50 p-2">
+                                <p className="mb-2 w-full text-xs font-medium uppercase text-gray-500">Floor plan</p>
+                                <a
+                                  href={floorPlanUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block max-h-[70vh] max-w-[70vw] rounded-lg"
+                                >
+                                  {isPdf ? (
+                                    <div className="flex h-40 items-center justify-center gap-2 text-gray-600">
+                                      <svg className="h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                      </svg>
+                                      <span className="text-sm">PDF — open</span>
+                                    </div>
+                                  ) : (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
+                                    <img
+                                      src={floorPlanUrl}
+                                      alt="Floor plan"
+                                      className="max-h-[70vh] max-w-full w-auto object-contain"
+                                    />
+                                  )}
+                                </a>
+                              </div>
+                            )}
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                              {floorApts.map((apt) => (
+                                <ApartmentCardItem
+                                  key={apt.id}
+                                  apt={apt}
+                                  onStatusChange={handleStatusChange}
+                                  getStatusColor={getStatusColor}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()
       ) : viewMode === 'grid' ? (
         /* Cards Grid View */
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -22,13 +22,13 @@ export default async function DashboardLayout({
 
   const navItems = [
     { href: '/apartments', label: 'Apartments', iconName: 'Home' },
-    { href: '/dashboard', label: 'Dashboard', iconName: 'LayoutDashboard' },
     ...(isAdmin
       ? [
-          { href: '/admin/districts', label: 'Districts', iconName: 'MapPin' },
           { href: '/admin/buildings', label: 'Buildings', iconName: 'Building2' },
+          { href: '/admin/districts', label: 'Districts', iconName: 'MapPin' },
         ]
       : []),
+    { href: '/dashboard', label: 'Analytics', iconName: 'LayoutDashboard' },
   ];
 
   return (
@@ -64,9 +64,9 @@ export default async function DashboardLayout({
         </div>
       </aside>
 
-      {/* Main content */}
-      <div className="ml-64 flex-1">
-        <main className="mx-auto max-w-7xl px-6 py-8">{children}</main>
+      {/* Main content — wide workspace */}
+      <div className="ml-64 min-w-0 flex-1">
+        <main className="mx-auto w-full max-w-[1600px] px-6 py-8 lg:px-8">{children}</main>
       </div>
     </div>
   );

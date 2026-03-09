@@ -31,6 +31,7 @@ export const updateBuildingSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   slug: slugSchema.optional(),
   districtId: z.number().int().positive().optional(),
+  floorsCount: z.number().int().min(0).optional().nullable(),
 });
 
 // Apartment schemas
@@ -73,6 +74,7 @@ export const updateApartmentSchema = z.object({
   floorplanDistribution: z.string().max(500).optional().nullable().or(z.literal('').transform(() => null)),
   exteriorLink: z.string().url('Invalid URL').optional().nullable().or(z.literal('').transform(() => null)),
   exteriorLink2: z.string().url('Invalid URL').optional().nullable().or(z.literal('').transform(() => null)),
+  notes: z.string().max(2000).optional().nullable().or(z.literal('').transform(() => null)),
 });
 
 export const updateApartmentStatusSchema = z.object({

@@ -36,10 +36,7 @@ export async function getCachedData<T>(
 
   // Используем unstable_cache от Next.js
   const cachedFn = unstable_cache(
-    async () => {
-      console.log(`[Cache] Cache miss for key: ${key}`);
-      return fn();
-    },
+    async () => fn(),
     [key],
     {
       revalidate: Math.min(revalidate, 60), // Максимум 60 секунд!
@@ -58,11 +55,9 @@ export async function getCachedData<T>(
  */
 export function invalidateCache(keys: string[], tags?: string[]): void {
   if (keys.length) {
-    console.log(`[Cache] Invalidating cache for keys: ${keys.join(', ')}`);
     keys.forEach((key) => cacheInvalidationKeys.add(key));
   }
   if (tags?.length) {
-    console.log(`[Cache] Revalidating tags: ${tags.join(', ')}`);
     tags.forEach((tag) => revalidateTag(tag));
   }
 }
@@ -73,11 +68,6 @@ export function invalidateCache(keys: string[], tags?: string[]): void {
  * @param tags - теги для инвалидации
  */
 export async function invalidateCacheByTags(tags: string[]): Promise<void> {
-  // Для Next.js cache tags нужно использовать revalidateTag
-  // Но это работает только в Server Actions или Route Handlers
-  console.log(`[Cache] Invalidating cache by tags: ${tags.join(', ')}`);
-  
-  // Добавляем теги в список для инвалидации
   tags.forEach((tag) => {
     cacheInvalidationKeys.add(`tag:${tag}`);
   });

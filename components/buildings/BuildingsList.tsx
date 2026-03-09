@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import type { Building, District } from '@prisma/client';
-import BuildingForm from './BuildingForm';
 
 type BuildingWithDistrict = Building & {
   district: District;
@@ -13,9 +13,6 @@ export default function BuildingsList() {
   const [districts, setDistricts] = useState<District[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [editingBuilding, setEditingBuilding] =
-    useState<BuildingWithDistrict | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<number | null>(null);
 
   const fetchDistricts = async () => {
@@ -24,8 +21,8 @@ export default function BuildingsList() {
       if (!response.ok) throw new Error('Failed to load districts');
       const data = await response.json();
       setDistricts(data);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // ignore
     }
   };
 
@@ -39,9 +36,8 @@ export default function BuildingsList() {
       if (!response.ok) throw new Error('Failed to load');
       const data = await response.json();
       setBuildings(data);
-    } catch (err) {
+    } catch {
       setError('Failed to load buildings');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -55,16 +51,6 @@ export default function BuildingsList() {
     fetchBuildings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDistrict]);
-
-  const handleCreate = () => {
-    setEditingBuilding(null);
-    setShowForm(true);
-  };
-
-  const handleEdit = (building: BuildingWithDistrict) => {
-    setEditingBuilding(building);
-    setShowForm(true);
-  };
 
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this building?')) {
@@ -85,12 +71,6 @@ export default function BuildingsList() {
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete');
     }
-  };
-
-  const handleFormClose = () => {
-    setShowForm(false);
-    setEditingBuilding(null);
-    fetchBuildings();
   };
 
   if (loading) {
@@ -127,22 +107,13 @@ export default function BuildingsList() {
             ))}
           </select>
         </div>
-        <button
-          onClick={handleCreate}
+        <Link
+          href="/admin/buildings/new"
           className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
         >
           + Create Building
-        </button>
+        </Link>
       </div>
-
-      {showForm && (
-        <BuildingForm
-          building={editingBuilding}
-          districts={districts}
-          onClose={handleFormClose}
-          onSuccess={handleFormClose}
-        />
-      )}
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
         <table className="min-w-full divide-y divide-gray-200">
@@ -188,12 +159,12 @@ export default function BuildingsList() {
                     {building.slug}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(building)}
+                    <Link
+                      href={`/admin/buildings/${building.id}`}
                       className="mr-2 text-blue-600 hover:text-blue-900"
                     >
                       Edit
-                    </button>
+                    </Link>
                     <button
                       onClick={() => handleDelete(building.id)}
                       className="text-red-600 hover:text-red-900"
