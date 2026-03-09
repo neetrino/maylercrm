@@ -14,6 +14,16 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
+  // Public landing pages: no account needed, access by link only
+  if (path.startsWith('/l/')) {
+    return NextResponse.next();
+  }
+
+  // Public API for landing data (used by /l/[token] page, no auth)
+  if (path.startsWith('/api/landing/')) {
+    return NextResponse.next();
+  }
+
   // Allow API routes with Bearer Token (they handle auth themselves)
   if (path.startsWith('/api/')) {
     const authHeader = req.headers.get('authorization');
