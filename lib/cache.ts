@@ -58,7 +58,7 @@ export function invalidateCache(keys: string[], tags?: string[]): void {
     keys.forEach((key) => cacheInvalidationKeys.add(key));
   }
   if (tags?.length) {
-    tags.forEach((tag) => revalidateTag(tag));
+    tags.forEach((tag) => revalidateTag(tag, 'max'));
   }
 }
 
