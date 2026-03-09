@@ -530,7 +530,7 @@ export default function ApartmentsList() {
                         const floorApts = byFloor[floorNum === -Infinity ? '—' : floorNum] ?? [];
                         const floorLabel = floorNum === -Infinity ? '—' : `Floor ${floorNum}`;
                         const buildingMeta = buildings.find((b) => b.id === firstApt.building.id) as (Building & { district: District; floorPlans?: { floor: number; fileUrl: string; fileName: string | null }[] }) | undefined;
-                        const buildingFloorPlan = floorNum !== -Infinity && buildingMeta?.floorPlans?.find((fp) => fp.floor === floorNum);
+                        const buildingFloorPlan = floorNum !== -Infinity ? buildingMeta?.floorPlans?.find((fp) => fp.floor === floorNum) : undefined;
                         const apartmentFloorPlan = floorApts
                           .flatMap((a) => (a.attachments ?? []).filter((at) => at.fileType === 'FLOORPLAN'))
                           .find(Boolean);
