@@ -2,6 +2,7 @@
 
 import { FileText } from 'lucide-react';
 import { useState } from 'react';
+import ImageLightbox from '@/components/ui/ImageLightbox';
 
 type Attachment = {
   id: number;
@@ -32,6 +33,7 @@ export default function FileUpload({
 }: FileUploadProps) {
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
   const [uploadError, setUploadError] = useState<{ [key: string]: string }>({});
+  const [lightbox, setLightbox] = useState<{ urls: string[]; index: number } | null>(null);
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -137,28 +139,29 @@ export default function FileUpload({
     if (!files || files.length === 0) {
       return <p className="text-sm text-gray-500">No files</p>;
     }
+    const imageFiles = files.filter((f) => isImageFileName(f.fileName));
     return (
       <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
         {files.map((file) => {
           const isImage = isImageFileName(file.fileName);
           if (isImage) {
+            const imgIndex = imageFiles.findIndex((f) => f.id === file.id);
             return (
               <div
                 key={file.id}
                 className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
               >
-                <a
-                  href={file.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block aspect-square overflow-hidden bg-gray-100"
+                <button
+                  type="button"
+                  onClick={() => imgIndex >= 0 && setLightbox({ urls: imageFiles.map((f) => f.fileUrl), index: imgIndex })}
+                  className="block w-full aspect-square overflow-hidden bg-gray-100 text-left"
                 >
                   <img
                     src={file.fileUrl}
                     alt={file.fileName || 'Preview'}
                     className="h-full w-full object-cover transition-transform group-hover:scale-105"
                   />
-                </a>
+                </button>
                 <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-3 py-2">
                   <span
                     className="min-w-0 flex-1 truncate text-xs text-gray-600"
@@ -231,23 +234,22 @@ export default function FileUpload({
     }
     return (
       <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-        {files.map((file) => (
+        {files.map((file, idx) => (
           <div
             key={file.id}
             className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
           >
-            <a
-              href={file.fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block aspect-square overflow-hidden bg-gray-100"
+            <button
+              type="button"
+              onClick={() => setLightbox({ urls: files.map((f) => f.fileUrl), index: idx })}
+              className="block w-full aspect-square overflow-hidden bg-gray-100 text-left"
             >
               <img
                 src={file.fileUrl}
                 alt={file.fileName || 'Image'}
                 className="h-full w-full object-cover transition-transform group-hover:scale-105"
               />
-            </a>
+            </button>
             <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-3 py-2">
               <span
                 className="min-w-0 flex-1 truncate text-xs text-gray-600"
@@ -404,6 +406,15 @@ export default function FileUpload({
           </div>
         );
       })}
+      {lightbox && (
+        <ImageLightbox
+          urls={lightbox.urls}
+          currentIndex={lightbox.index}
+          onClose={() => setLightbox(null)}
+          onPrev={lightbox.index > 0 ? () => setLightbox((p) => p && { ...p, index: p.index - 1 }) : undefined}
+          onNext={lightbox.index < lightbox.urls.length - 1 ? () => setLightbox((p) => p && { ...p, index: p.index + 1 }) : undefined}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ImageLightbox from '@/components/ui/ImageLightbox';
 
 function getEmbedPreviewUrl(url: string): string {
   try {
@@ -66,6 +67,7 @@ export default function LandingView({ token }: { token: string }) {
   const [apartment, setApartment] = useState<LandingApartment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [lightbox, setLightbox] = useState<{ urls: string[]; index: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -238,32 +240,58 @@ export default function LandingView({ token }: { token: string }) {
           </section>
         )}
 
-        {/* 2D Floor plans — same style, icon or image */}
+        {/* 2D Floor plans — PDF: icon like CRM; image: thumbnail */}
         {floorplans.length > 0 && (
           <section className="mb-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
             <h2 className="mb-6 text-xl font-semibold text-slate-900">2D Floor plans</h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {floorplans.map((att) => (
-                <a
-                  key={att.id}
-                  href={att.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={att.fileUrl}
-                    alt={att.fileName || 'Floor plan'}
-                    className="h-auto w-full object-contain"
-                    style={{ maxHeight: '28rem' }}
-                  />
-                  <div className="border-t border-slate-200 px-4 py-3">
-                    <span className="text-sm font-medium text-slate-700">{att.fileName || 'Floor plan'}</span>
-                    <span className="ml-2 text-xs text-slate-500">— Download</span>
+              {floorplans.map((att) => {
+                const isPdf = (att.fileUrl?.toLowerCase().endsWith('.pdf') || att.fileName?.toLowerCase().endsWith('.pdf')) ?? false;
+                if (isPdf) {
+                  return (
+                    <a
+                      key={att.id}
+                      href={att.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-6 transition-colors hover:bg-slate-100"
+                    >
+                      <svg className="h-14 w-14 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                      </svg>
+                      <span className="mt-2 text-center text-xs font-medium text-slate-600">PDF</span>
+                      <span className="mt-1 max-w-full truncate px-2 text-center text-xs text-slate-500" title={att.fileName || undefined}>
+                        {att.fileName || 'Floor plan'}
+                      </span>
+                      <span className="mt-2 rounded-lg bg-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700">Download</span>
+                    </a>
+                  );
+                }
+                return (
+                  <div key={att.id} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                    <button
+                      type="button"
+                      onClick={() => setLightbox({
+                        urls: floorplans.filter((a) => !(a.fileUrl?.toLowerCase().endsWith('.pdf') || a.fileName?.toLowerCase().endsWith('.pdf'))).map((a) => a.fileUrl),
+                        index: floorplans.filter((a) => !(a.fileUrl?.toLowerCase().endsWith('.pdf') || a.fileName?.toLowerCase().endsWith('.pdf'))).findIndex((a) => a.id === att.id),
+                      })}
+                      className="block w-full text-left"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={att.fileUrl}
+                        alt={att.fileName || 'Floor plan'}
+                        className="h-auto w-full cursor-pointer object-contain"
+                        style={{ maxHeight: '28rem' }}
+                      />
+                    </button>
+                    <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+                      <span className="text-sm font-medium text-slate-700">{att.fileName || 'Floor plan'}</span>
+                      <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 hover:underline">Download</a>
+                    </div>
                   </div>
-                </a>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
@@ -303,19 +331,18 @@ export default function LandingView({ token }: { token: string }) {
           );
         })}
 
-        {/* Progress Images / Stages — prominent block */}
+        {/* Progress Images / Stages — open in lightbox on site */}
         {progressImages.length > 0 && (
           <section className="mb-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
             <h2 className="mb-6 text-xl font-semibold text-slate-900">Stages / Construction progress</h2>
             <p className="mb-6 text-sm text-slate-600">Photo report of the construction progress.</p>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {progressImages.map((att) => (
-                <a
+              {progressImages.map((att, idx) => (
+                <button
                   key={att.id}
-                  href={att.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                  type="button"
+                  onClick={() => setLightbox({ urls: progressImages.map((a) => a.fileUrl), index: idx })}
+                  className="group block w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-left"
                 >
                   <div className="aspect-square overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -330,24 +357,23 @@ export default function LandingView({ token }: { token: string }) {
                       <span className="line-clamp-2 text-xs text-slate-600">{att.fileName}</span>
                     </div>
                   )}
-                </a>
+                </button>
               ))}
             </div>
           </section>
         )}
 
-        {/* Other photos */}
+        {/* Other photos — open in lightbox on site */}
         {images.length > 0 && (
           <section className="mb-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
             <h2 className="mb-6 text-xl font-semibold text-slate-900">Photos</h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {images.map((att) => (
-                <a
+              {images.map((att, idx) => (
+                <button
                   key={att.id}
-                  href={att.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                  type="button"
+                  onClick={() => setLightbox({ urls: images.map((a) => a.fileUrl), index: idx })}
+                  className="group block w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-left"
                 >
                   <div className="aspect-square overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -357,12 +383,22 @@ export default function LandingView({ token }: { token: string }) {
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
                   </div>
-                </a>
+                </button>
               ))}
             </div>
           </section>
         )}
       </div>
+
+      {lightbox && (
+        <ImageLightbox
+          urls={lightbox.urls}
+          currentIndex={lightbox.index}
+          onClose={() => setLightbox(null)}
+          onPrev={lightbox.index > 0 ? () => setLightbox((p) => p && { ...p, index: p.index - 1 }) : undefined}
+          onNext={lightbox.index < lightbox.urls.length - 1 ? () => setLightbox((p) => p && { ...p, index: p.index + 1 }) : undefined}
+        />
+      )}
     </div>
   );
 }
