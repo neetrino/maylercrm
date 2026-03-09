@@ -118,6 +118,14 @@ Value: 026bf0c4fdbe8af4c3a3a14485c02eb160833b87758323e60fe2ac701a6f9852
 Environment: Production, Preview, Development
 ```
 
+#### 5. NEXT_PUBLIC_APP_URL (для коротких ссылок на лендинги)
+```
+Name: NEXT_PUBLIC_APP_URL
+Value: https://maylercrm.neetrino.com
+Environment: Production (и Preview, если нужны короткие ссылки и там)
+```
+Без этой переменной ссылка «Лендинг» в CRM будет вести на длинный URL деплоя (`maylercrm-xxx.vercel.app`). С ней ссылки будут вида `https://maylercrm.neetrino.com/l/TOKEN`.
+
 **Как добавить:**
 1. Нажмите "Add" для каждой переменной
 2. Выберите все три окружения (Production, Preview, Development)
@@ -233,6 +241,14 @@ NEXTAUTH_URL="https://meluviscrm.vercel.app"
 - Проверьте `NEXTAUTH_SECRET` (должен быть минимум 32 символа)
 - Проверьте `NEXTAUTH_URL` (должен совпадать с доменом)
 - Очистите cookies в браузере и попробуйте снова
+
+### При открытии ссылки на лендинг просит верификацию Vercel
+Лендинги (`/l/TOKEN`) должны открываться без входа. Если Vercel показывает свою страницу верификации:
+
+1. **Project Settings → Deployment Protection**
+2. Для **Production** выберите **"Only Preview Deployments"** (защищать только превью), чтобы продакшен и кастомный домен были без запроса входа.
+3. Либо отключите **Vercel Authentication** для продакшена.
+4. Ссылки на лендинг лучше давать с **кастомным доменом** (`https://maylercrm.neetrino.com/l/...`) — на нём защита превью не действует.
 
 ---
 

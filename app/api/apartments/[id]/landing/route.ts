@@ -29,12 +29,11 @@ export async function POST(
       );
     }
 
+    // Use canonical public URL so landing links are short and stable (e.g. https://maylercrm.neetrino.com).
+    // Set NEXT_PUBLIC_APP_URL in Vercel to your custom domain to avoid deployment-specific vercel.app URLs.
     const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : request.nextUrl.origin;
-    const landingUrl = `${baseUrl.replace(/\/$/, '')}/l/${token}`;
+      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || request.nextUrl.origin.replace(/\/$/, '');
+    const landingUrl = `${baseUrl}/l/${token}`;
 
     return NextResponse.json({ url: landingUrl, token });
   } catch (error) {
