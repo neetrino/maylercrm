@@ -162,7 +162,7 @@ export default function BuildingForm({
   };
 
   const formContent = (
-    <div className={standalone ? 'card w-full max-w-2xl p-6' : 'card w-full max-w-md p-6'}>
+    <div className={standalone ? 'card w-full max-w-5xl p-6 sm:p-8' : 'card w-full max-w-md p-6'}>
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-gray-900">
             {building ? 'Edit Building' : 'Create Building'}
@@ -221,7 +221,7 @@ export default function BuildingForm({
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               required
-              pattern="[a-z0-9-]+"
+              pattern="[a-z0-9\-]+"
               className="input-field"
               placeholder="tower-1"
             />

@@ -508,9 +508,8 @@ export default function ApartmentsList() {
                 const floorNumbers = Object.keys(byFloor)
                   .map((k) => (k === '—' ? -Infinity : Number(k)))
                   .filter((n) => Number.isFinite(n))
-                  .sort((a, b) => b - a);
+                  .sort((a, b) => a - b);
                 const unknownFloor = byFloor['—'];
-                if (unknownFloor?.length) floorNumbers.push(-Infinity);
                 const sortedFloors = floorNumbers.filter((n) => n !== -Infinity);
                 if (unknownFloor?.length) sortedFloors.push(-Infinity);
                 const firstApt = buildingApts[0];
@@ -543,7 +542,7 @@ export default function ApartmentsList() {
                                   href={floorPlanUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="block max-h-48 w-full overflow-hidden rounded-lg"
+                                  className="block w-full rounded-lg"
                                 >
                                   {isPdf ? (
                                     <div className="flex h-40 items-center justify-center gap-2 text-gray-600">
@@ -557,7 +556,7 @@ export default function ApartmentsList() {
                                     <img
                                       src={floorPlanUrl}
                                       alt="Floor plan"
-                                      className="h-full w-full object-contain"
+                                      className="w-full h-auto object-contain"
                                     />
                                   )}
                                 </a>
