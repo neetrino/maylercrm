@@ -99,6 +99,8 @@ type Apartment = {
   district_name: string;
   district_slug: string;
   updatedAt: string;
+  landingToken?: string | null;
+  notes?: string | null;
   attachments?: Attachment[] | AttachmentsGrouped;
 };
 
@@ -116,6 +118,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
   const [formData, setFormData] = useState<Partial<Apartment>>({});
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewOriginalUrl, setPreviewOriginalUrl] = useState<string | null>(null);
+  const [landingCopied, setLandingCopied] = useState(false);
 
   useEffect(() => {
     // При загрузке страницы всегда обновляем без кэша для получения актуальных данных
@@ -261,6 +264,9 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
       if (formData.floorplanDistribution !== undefined) {
         apiData.floorplanDistribution = parseString(formData.floorplanDistribution);
       }
+      if (formData.notes !== undefined) {
+        apiData.notes = parseString(formData.notes);
+      }
 
       console.log('Sending data to API:', JSON.stringify(apiData, null, 2));
       
@@ -386,6 +392,21 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
     }
   };
 
+  const handleCopyLandingLink = async () => {
+    try {
+      const res = await fetch(`/api/apartments/${apartmentId}/landing`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error('Failed');
+      const { url } = await res.json();
+      await navigator.clipboard.writeText(url);
+      setLandingCopied(true);
+      setTimeout(() => setLandingCopied(false), 2000);
+    } catch {
+      alert('Failed to copy landing link');
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
       case 'UPCOMING':
@@ -443,7 +464,24 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
               {apartment.district_name} - {apartment.building_name}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={handleCopyLandingLink}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              title="Copy landing link for buyer"
+            >
+              {landingCopied ? (
+                <>Copied</>
+              ) : (
+                <>
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.172-1.172m4.828-4.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.172 1.172" />
+                  </svg>
+                  Landing link
+                </>
+              )}
+            </button>
             <select
               value={apartment.status}
               onChange={(e) => handleStatusChange(e.target.value)}
@@ -767,6 +805,24 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                     {formData.dealDescription?.length || 0}/500
                   </p>
                 </div>
+                <div className="col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Notes (max 2000 characters)
+                  </label>
+                  <textarea
+                    value={formData.notes || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, notes: e.target.value || null })
+                    }
+                    maxLength={2000}
+                    rows={3}
+                    className="input-field"
+                    placeholder="Internal notes for this apartment"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    {formData.notes?.length || 0}/2000
+                  </p>
+                </div>
                 {/* Agreement Files Section */}
                 <div className="col-span-2">
                   <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -854,6 +910,14 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                     {apartment.dealDescription || '-'}
                   </p>
                 </div>
+                {apartment.notes && (
+                  <div className="col-span-2">
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                      Notes
+                    </label>
+                    <p className="text-base text-gray-900 whitespace-pre-wrap">{apartment.notes}</p>
+                  </div>
+                )}
                 {/* Agreement Files Section */}
                 <div className="col-span-2">
                   <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">

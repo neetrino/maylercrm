@@ -6,6 +6,13 @@ import { useSession } from 'next-auth/react';
 import type { Building, District } from '@prisma/client';
 import ApartmentForm from './ApartmentForm';
 
+type Attachment = {
+  id: number;
+  fileType: string;
+  fileUrl: string;
+  fileName?: string | null;
+};
+
 type Apartment = {
   id: number;
   apartmentNo: string;
@@ -14,8 +21,10 @@ type Apartment = {
   total_price: number | null;
   total_paid: number | null;
   balance: number | null;
+  floor?: number | null;
   building: Building & { district: District };
   updatedAt: string;
+  attachments?: Attachment[];
 };
 
 // Мемоизированный компонент карточки квартиры для оптимизации рендеринга
@@ -116,7 +125,7 @@ export default function ApartmentsList() {
   const [searchInput, setSearchInput] = useState(''); // для отображения в инпуте (с debounce)
   const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'floor'>('grid');
   const [sortBy, setSortBy] = useState<string>('apartmentNo');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [pagination, setPagination] = useState({
@@ -356,6 +365,17 @@ export default function ApartmentsList() {
               >
                 <span className="text-base">☰</span>
               </button>
+              <button
+                onClick={() => setViewMode('floor')}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  viewMode === 'floor'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                title="Floor view"
+              >
+                <span className="text-base">▦</span>
+              </button>
             </div>
             {isAdmin && (
               <button
@@ -464,6 +484,92 @@ export default function ApartmentsList() {
             </button>
           )}
         </div>
+      ) : viewMode === 'floor' ? (
+        /* Floor view: group by building, then by floor; show floor plan + apartments per floor */
+        (() => {
+          type GroupKey = string;
+          const byBuilding: Record<GroupKey, Apartment[]> = {};
+          apartments.forEach((apt) => {
+            const key = `${apt.building.id}-${apt.building.district.name}-${apt.building.name}`;
+            if (!byBuilding[key]) byBuilding[key] = [];
+            byBuilding[key].push(apt);
+          });
+          const buildingEntries = Object.entries(byBuilding);
+          return (
+            <div className="space-y-10">
+              {buildingEntries.map(([key, buildingApts]) => {
+                const byFloor: Record<number | string, Apartment[]> = {};
+                buildingApts.forEach((apt) => {
+                  const f = apt.floor ?? '—';
+                  const k = typeof f === 'number' ? f : '—';
+                  if (!byFloor[k]) byFloor[k] = [];
+                  byFloor[k].push(apt);
+                });
+                const floorNumbers = Object.keys(byFloor)
+                  .map((k) => (k === '—' ? -Infinity : Number(k)))
+                  .filter((n) => Number.isFinite(n))
+                  .sort((a, b) => b - a);
+                const unknownFloor = byFloor['—'];
+                if (unknownFloor?.length) floorNumbers.push(-Infinity);
+                const sortedFloors = floorNumbers.filter((n) => n !== -Infinity);
+                if (unknownFloor?.length) sortedFloors.push(-Infinity);
+                const firstApt = buildingApts[0];
+                const buildingLabel = firstApt
+                  ? `${firstApt.building.district.name} — ${firstApt.building.name}`
+                  : key;
+                return (
+                  <div key={key} className="card overflow-hidden">
+                    <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                      <h2 className="text-lg font-semibold text-gray-900">{buildingLabel}</h2>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {sortedFloors.map((floorNum) => {
+                        const floorApts = byFloor[floorNum === -Infinity ? '—' : floorNum] ?? [];
+                        const floorLabel = floorNum === -Infinity ? '—' : `Floor ${floorNum}`;
+                        const floorPlanAttachment = floorApts
+                          .flatMap((a) => (a.attachments ?? []).filter((at) => at.fileType === 'FLOORPLAN'))
+                          .find(Boolean);
+                        return (
+                          <div key={floorLabel} className="p-6">
+                            <h3 className="mb-3 text-base font-medium text-gray-800">{floorLabel}</h3>
+                            {floorPlanAttachment && (
+                              <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-2">
+                                <p className="mb-2 text-xs font-medium uppercase text-gray-500">Floor plan</p>
+                                <a
+                                  href={floorPlanAttachment.fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block max-h-48 w-full overflow-hidden rounded-lg"
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={floorPlanAttachment.fileUrl}
+                                    alt="Floor plan"
+                                    className="h-full w-full object-contain"
+                                  />
+                                </a>
+                              </div>
+                            )}
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                              {floorApts.map((apt) => (
+                                <ApartmentCardItem
+                                  key={apt.id}
+                                  apt={apt}
+                                  onStatusChange={handleStatusChange}
+                                  getStatusColor={getStatusColor}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()
       ) : viewMode === 'grid' ? (
         /* Cards Grid View */
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

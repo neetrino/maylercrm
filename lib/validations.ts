@@ -73,6 +73,7 @@ export const updateApartmentSchema = z.object({
   floorplanDistribution: z.string().max(500).optional().nullable().or(z.literal('').transform(() => null)),
   exteriorLink: z.string().url('Invalid URL').optional().nullable().or(z.literal('').transform(() => null)),
   exteriorLink2: z.string().url('Invalid URL').optional().nullable().or(z.literal('').transform(() => null)),
+  notes: z.string().max(2000).optional().nullable().or(z.literal('').transform(() => null)),
 });
 
 export const updateApartmentStatusSchema = z.object({

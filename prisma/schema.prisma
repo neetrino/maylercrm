@@ -79,6 +79,8 @@ model Apartment {
   floorplanDistribution String?       @map("floorplan_distribution") @db.Text
   exteriorLink          String?       @map("exterior_link") @db.Text
   exteriorLink2         String?       @map("exterior_link2") @db.Text
+  landingToken          String?       @unique @map("landing_token") @db.Text
+  notes                 String?       @map("notes") @db.Text
   createdAt             DateTime      @default(now()) @map("created_at")
   updatedAt             DateTime      @updatedAt @map("updated_at")
 
