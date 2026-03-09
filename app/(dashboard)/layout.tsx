@@ -22,13 +22,13 @@ export default async function DashboardLayout({
 
   const navItems = [
     { href: '/apartments', label: 'Apartments', iconName: 'Home' },
-    { href: '/dashboard', label: 'Dashboard', iconName: 'LayoutDashboard' },
     ...(isAdmin
       ? [
-          { href: '/admin/districts', label: 'Districts', iconName: 'MapPin' },
           { href: '/admin/buildings', label: 'Buildings', iconName: 'Building2' },
+          { href: '/admin/districts', label: 'Districts', iconName: 'MapPin' },
         ]
       : []),
+    { href: '/dashboard', label: 'Analytics', iconName: 'LayoutDashboard' },
   ];
 
   return (
