@@ -31,6 +31,7 @@ export const updateBuildingSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   slug: slugSchema.optional(),
   districtId: z.number().int().positive().optional(),
+  floorsCount: z.number().int().min(0).optional().nullable(),
 });
 
 // Apartment schemas

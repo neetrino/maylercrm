@@ -526,27 +526,40 @@ export default function ApartmentsList() {
                       {sortedFloors.map((floorNum) => {
                         const floorApts = byFloor[floorNum === -Infinity ? '—' : floorNum] ?? [];
                         const floorLabel = floorNum === -Infinity ? '—' : `Floor ${floorNum}`;
-                        const floorPlanAttachment = floorApts
+                        const buildingMeta = buildings.find((b) => b.id === firstApt.building.id) as (Building & { district: District; floorPlans?: { floor: number; fileUrl: string; fileName: string | null }[] }) | undefined;
+                        const buildingFloorPlan = floorNum !== -Infinity && buildingMeta?.floorPlans?.find((fp) => fp.floor === floorNum);
+                        const apartmentFloorPlan = floorApts
                           .flatMap((a) => (a.attachments ?? []).filter((at) => at.fileType === 'FLOORPLAN'))
                           .find(Boolean);
+                        const floorPlanUrl = buildingFloorPlan?.fileUrl ?? apartmentFloorPlan?.fileUrl;
+                        const isPdf = floorPlanUrl?.toLowerCase().endsWith('.pdf');
                         return (
                           <div key={floorLabel} className="p-6">
                             <h3 className="mb-3 text-base font-medium text-gray-800">{floorLabel}</h3>
-                            {floorPlanAttachment && (
+                            {floorPlanUrl && (
                               <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-2">
                                 <p className="mb-2 text-xs font-medium uppercase text-gray-500">Floor plan</p>
                                 <a
-                                  href={floorPlanAttachment.fileUrl}
+                                  href={floorPlanUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="block max-h-48 w-full overflow-hidden rounded-lg"
                                 >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={floorPlanAttachment.fileUrl}
-                                    alt="Floor plan"
-                                    className="h-full w-full object-contain"
-                                  />
+                                  {isPdf ? (
+                                    <div className="flex h-40 items-center justify-center gap-2 text-gray-600">
+                                      <svg className="h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                      </svg>
+                                      <span className="text-sm">PDF — open</span>
+                                    </div>
+                                  ) : (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
+                                    <img
+                                      src={floorPlanUrl}
+                                      alt="Floor plan"
+                                      className="h-full w-full object-contain"
+                                    />
+                                  )}
                                 </a>
                               </div>
                             )}

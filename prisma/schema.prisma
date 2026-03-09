@@ -42,18 +42,35 @@ model District {
 
 // Buildings table
 model Building {
-  id         Int      @id @default(autoincrement())
-  districtId Int      @map("district_id")
-  name       String
-  slug       String
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id          Int      @id @default(autoincrement())
+  districtId  Int      @map("district_id")
+  name        String
+  slug        String
+  floorsCount Int?     @map("floors_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  district   District    @relation(fields: [districtId], references: [id], onDelete: Cascade)
-  apartments Apartment[]
+  district     District             @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  apartments   Apartment[]
+  floorPlans   BuildingFloorPlan[]
 
   @@unique([districtId, slug])
   @@map("buildings")
+}
+
+// Building floor plan image per floor (used in Floor view)
+model BuildingFloorPlan {
+  id         Int      @id @default(autoincrement())
+  buildingId Int      @map("building_id")
+  floor      Int      @map("floor")
+  fileUrl    String   @map("file_url") @db.Text
+  fileName   String?  @map("file_name")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  building Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@unique([buildingId, floor])
+  @@map("building_floor_plans")
 }
 
 // Apartments table (все 24 поля из ТЗ)
