@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { Building, District } from '@prisma/client';
 
 type FloorPlan = { id: number; floor: number; fileUrl: string; fileName: string | null };
@@ -14,8 +16,10 @@ type BuildingWithDistrict = Building & {
 interface BuildingFormProps {
   building: BuildingWithDistrict | null;
   districts: District[];
-  onClose: () => void;
-  onSuccess: () => void;
+  onClose?: () => void;
+  onSuccess?: () => void;
+  /** When true, render as standalone page (no modal overlay); use router for back/success */
+  standalone?: boolean;
 }
 
 export default function BuildingForm({
@@ -23,7 +27,17 @@ export default function BuildingForm({
   districts,
   onClose,
   onSuccess,
+  standalone = false,
 }: BuildingFormProps) {
+  const router = useRouter();
+  const handleSuccess = () => {
+    if (standalone) router.push('/admin/buildings');
+    else onSuccess?.();
+  };
+  const handleClose = () => {
+    if (standalone) router.push('/admin/buildings');
+    else onClose?.();
+  };
   const [districtId, setDistrictId] = useState<number>(districts[0]?.id || 0);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -85,7 +99,7 @@ export default function BuildingForm({
 
       const updated = await response.json();
       if (building && updated.floorPlans) setFullBuilding(updated);
-      onSuccess();
+      handleSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
@@ -147,9 +161,8 @@ export default function BuildingForm({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="card w-full max-w-md p-6">
+  const formContent = (
+    <div className={standalone ? 'card w-full max-w-2xl p-6' : 'card w-full max-w-md p-6'}>
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-gray-900">
             {building ? 'Edit Building' : 'Create Building'}
@@ -324,13 +337,19 @@ export default function BuildingForm({
           )}
 
           <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn-secondary"
-            >
-              Cancel
-            </button>
+            {standalone ? (
+              <Link href="/admin/buildings" className="btn-secondary">
+                Cancel
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={handleClose}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+            )}
             <button
               type="submit"
               disabled={loading}
@@ -341,6 +360,25 @@ export default function BuildingForm({
           </div>
         </form>
       </div>
+  );
+
+  if (standalone) {
+    return (
+      <div>
+        <Link
+          href="/admin/buildings"
+          className="mb-4 inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+        >
+          ← Back to Buildings
+        </Link>
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      {formContent}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { buildingService } from '@/services/building.service';
 import { createBuildingSchema } from '@/lib/validations';
-import { getCachedData, cacheKeys, invalidateCache } from '@/lib/cache';
+import { cacheKeys, invalidateCache } from '@/lib/cache';
 import { z } from 'zod';
 
 export async function GET(request: NextRequest) {
@@ -17,19 +17,14 @@ export async function GET(request: NextRequest) {
     const districtId = searchParams.get('districtId');
     const parsedDistrictId = districtId ? parseInt(districtId) : undefined;
 
-    // Кеш на 60 секунд - очень короткий для актуальности данных
-    const buildings = await getCachedData(
-      cacheKeys.buildings(parsedDistrictId),
-      () => buildingService.getAll(parsedDistrictId),
-      60, // 60 секунд (1 минута)
-      ['buildings', parsedDistrictId ? `buildings:district:${parsedDistrictId}` : 'buildings:all']
-    );
-    
+    const buildings = await buildingService.getAll(parsedDistrictId);
     return NextResponse.json(buildings);
   } catch (error) {
-    console.error('[API] Error fetching buildings:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error('[API] Error fetching buildings:', message, stack);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', detail: message },
       { status: 500 }
     );
   }

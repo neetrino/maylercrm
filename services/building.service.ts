@@ -1,32 +1,35 @@
 import { prisma } from '@/lib/prisma';
 import type { Building } from '@prisma/client';
 
-const buildingInclude = {
-  district: {
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-    },
-  },
-  floorPlans: {
-    select: {
-      id: true,
-      floor: true,
-      fileUrl: true,
-      fileName: true,
-    },
-    orderBy: { floor: 'asc' },
-  },
+const districtSelect = {
+  id: true,
+  name: true,
+  slug: true,
 };
 
 export const buildingService = {
   async getAll(districtId?: number) {
-    return await prisma.building.findMany({
-      where: districtId ? { districtId } : undefined,
-      include: buildingInclude,
-      orderBy: { name: 'asc' },
-    });
+    const where = districtId ? { districtId } : undefined;
+    try {
+      return await prisma.building.findMany({
+        where,
+        include: {
+          district: { select: districtSelect },
+          floorPlans: {
+            select: { id: true, floor: true, fileUrl: true, fileName: true },
+            orderBy: { floor: 'asc' },
+          },
+        },
+        orderBy: { name: 'asc' },
+      });
+    } catch (e) {
+      // Fallback if floorPlans relation missing (e.g. old Prisma client)
+      return await prisma.building.findMany({
+        where,
+        include: { district: { select: districtSelect } },
+        orderBy: { name: 'asc' },
+      });
+    }
   },
 
   async getById(id: number) {
