@@ -4,7 +4,7 @@ import { buildingService } from '@/services/building.service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     // Проверка Bearer Token для внешнего API
@@ -20,7 +20,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const district = await districtService.getBySlug(params.slug);
+    const { slug } = await params;
+    const district = await districtService.getBySlug(slug);
 
     if (!district) {
       return NextResponse.json(

@@ -9,7 +9,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'ap
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -17,7 +17,8 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const buildingId = parseInt(params.id);
+    const { id: idParam } = await params;
+    const buildingId = parseInt(idParam);
     if (isNaN(buildingId)) {
       return NextResponse.json({ error: 'Invalid building ID' }, { status: 400 });
     }
@@ -80,7 +81,7 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -88,7 +89,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const buildingId = parseInt(params.id);
+    const { id: idParam } = await params;
+    const buildingId = parseInt(idParam);
     if (isNaN(buildingId)) {
       return NextResponse.json({ error: 'Invalid building ID' }, { status: 400 });
     }

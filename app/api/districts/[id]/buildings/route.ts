@@ -5,7 +5,7 @@ import { buildingService } from '@/services/building.service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Проверка для внешнего API (Bearer Token) или внутреннего (Session)
@@ -26,7 +26,8 @@ export async function GET(
       }
     }
 
-    const districtId = parseInt(params.id);
+    const { id: idParam } = await params;
+    const districtId = parseInt(idParam);
 
     if (isNaN(districtId)) {
       return NextResponse.json(

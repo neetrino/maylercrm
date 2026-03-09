@@ -5,7 +5,7 @@ import { invalidateCache, cacheKeys } from '@/lib/cache';
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string; floor: string } }
+  { params }: { params: Promise<{ id: string; floor: string }> }
 ) {
   try {
     const session = await auth();
@@ -13,8 +13,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const buildingId = parseInt(params.id);
-    const floor = parseInt(params.floor, 10);
+    const { id: idParam, floor: floorParam } = await params;
+    const buildingId = parseInt(idParam);
+    const floor = parseInt(floorParam, 10);
 
     if (isNaN(buildingId) || isNaN(floor)) {
       return NextResponse.json({ error: 'Invalid building or floor' }, { status: 400 });

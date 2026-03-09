@@ -4,10 +4,11 @@ import { apartmentService } from '@/services/apartment.service';
 /** Public API: get apartment by landing token. No auth — only link holders can access. */
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    const token = params.token?.trim();
+    const { token: tokenParam } = await params;
+    const token = tokenParam?.trim();
     if (!token) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
     }

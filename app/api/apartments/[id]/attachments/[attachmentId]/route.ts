@@ -5,9 +5,7 @@ import { attachmentService } from '@/services/attachment.service';
 // Удаление вложения: только отвязка от квартиры (запись в БД). Файл в R2 не удаляется.
 export async function DELETE(
   request: NextRequest,
-  {
-    params,
-  }: { params: { id: string; attachmentId: string } }
+  { params }: { params: Promise<{ id: string; attachmentId: string }> }
 ) {
   try {
     const session = await auth();
@@ -16,7 +14,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const attachmentId = parseInt(params.attachmentId);
+    const { attachmentId: attachmentIdStr } = await params;
+    const attachmentId = parseInt(attachmentIdStr);
 
     if (isNaN(attachmentId)) {
       return NextResponse.json(
