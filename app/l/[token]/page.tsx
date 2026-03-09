@@ -1,9 +1,10 @@
 import LandingView from '@/components/landing/LandingView';
 
-export default function LandingPage({
+export default async function LandingPage({
   params,
 }: {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }) {
-  return <LandingView token={params.token} />;
+  const { token } = await params;
+  return <LandingView token={token} />;
 }

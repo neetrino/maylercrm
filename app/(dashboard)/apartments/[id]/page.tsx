@@ -5,7 +5,7 @@ import ApartmentCard from '@/components/apartments/ApartmentCard';
 export default async function ApartmentPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await auth();
 
@@ -13,7 +13,8 @@ export default async function ApartmentPage({
     redirect('/login');
   }
 
-  const id = parseInt(params.id);
+  const { id: idParam } = await params;
+  const id = parseInt(idParam);
 
   if (isNaN(id)) {
     redirect('/apartments');

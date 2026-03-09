@@ -4,7 +4,7 @@ import { apartmentService } from '@/services/apartment.service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     // Проверка Bearer Token для внешнего API
@@ -20,15 +20,11 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { slug } = await params;
     // Согласно спецификации: GET /api/buildings/{building_slug}/apartments
-    // Но нам нужен district_slug для поиска здания
-    // Используем формат: /api/districts/{district_slug}/buildings/{building_slug}/apartments
-    // Или ищем здание по slug во всех районах (менее эффективно, но проще)
-    
     // Временное решение: ищем здание по slug во всех районах
-    // В будущем можно улучшить структуру API
     const allBuildings = await buildingService.getAll();
-    const building = allBuildings.find((b) => b.slug === params.slug);
+    const building = allBuildings.find((b) => b.slug === slug);
 
     if (!building) {
       return NextResponse.json(
