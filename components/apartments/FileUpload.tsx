@@ -1,6 +1,7 @@
 'use client';
 
 import { FileText } from 'lucide-react';
+import Image from 'next/image';
 import { useState } from 'react';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 
@@ -154,12 +155,14 @@ export default function FileUpload({
                 <button
                   type="button"
                   onClick={() => imgIndex >= 0 && setLightbox({ urls: imageFiles.map((f) => f.fileUrl), index: imgIndex })}
-                  className="block w-full aspect-square overflow-hidden bg-gray-100 text-left"
+                  className="relative block w-full aspect-square overflow-hidden bg-gray-100 text-left"
                 >
-                  <img
+                  <Image
                     src={file.fileUrl}
                     alt={file.fileName || 'Preview'}
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    fill
+                    sizes="(max-width: 768px) 50vw, 200px"
+                    className="object-cover transition-transform group-hover:scale-105"
                   />
                 </button>
                 <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-3 py-2">
@@ -242,12 +245,14 @@ export default function FileUpload({
             <button
               type="button"
               onClick={() => setLightbox({ urls: files.map((f) => f.fileUrl), index: idx })}
-              className="block w-full aspect-square overflow-hidden bg-gray-100 text-left"
+              className="relative block w-full aspect-square overflow-hidden bg-gray-100 text-left"
             >
-              <img
+              <Image
                 src={file.fileUrl}
                 alt={file.fileName || 'Image'}
-                className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                fill
+                sizes="(max-width: 768px) 50vw, 200px"
+                className="object-cover transition-transform group-hover:scale-105"
               />
             </button>
             <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-3 py-2">

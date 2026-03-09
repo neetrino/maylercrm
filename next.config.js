@@ -10,7 +10,10 @@ const nextConfig = {
       },
     ],
   },
-  // Отключаем кэширование в dev режиме для избежания проблем с webpack
+  // Next.js 16: serverExternalPackages (replaces experimental.serverComponentsExternalPackages)
+  serverExternalPackages: ['bcryptjs'],
+  // Next.js 16: required when webpack config exists (avoids Turbopack vs webpack error)
+  turbopack: {},
   webpack: (config, { dev, isServer }) => {
     if (dev && !isServer) {
       config.watchOptions = {
@@ -19,11 +22,6 @@ const nextConfig = {
       };
     }
     return config;
-  },
-  // Исключаем bcryptjs из проверки Edge Runtime
-  // так как он используется только в Node.js runtime (API routes)
-  experimental: {
-    serverComponentsExternalPackages: ['bcryptjs'],
   },
 }
 
