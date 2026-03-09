@@ -540,13 +540,13 @@ export default function ApartmentsList() {
                           <div key={floorLabel} className="p-6">
                             <h3 className="mb-3 text-base font-medium text-gray-800">{floorLabel}</h3>
                             {floorPlanUrl && (
-                              <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-2">
-                                <p className="mb-2 text-xs font-medium uppercase text-gray-500">Floor plan</p>
+                              <div className="mb-4 flex flex-col items-center rounded-xl border border-gray-200 bg-gray-50 p-2">
+                                <p className="mb-2 w-full text-xs font-medium uppercase text-gray-500">Floor plan</p>
                                 <a
                                   href={floorPlanUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="block w-full rounded-lg"
+                                  className="block max-h-[70vh] max-w-[70vw] rounded-lg"
                                 >
                                   {isPdf ? (
                                     <div className="flex h-40 items-center justify-center gap-2 text-gray-600">
@@ -560,7 +560,7 @@ export default function ApartmentsList() {
                                     <img
                                       src={floorPlanUrl}
                                       alt="Floor plan"
-                                      className="w-full h-auto object-contain"
+                                      className="max-h-[70vh] max-w-full w-auto object-contain"
                                     />
                                   )}
                                 </a>
