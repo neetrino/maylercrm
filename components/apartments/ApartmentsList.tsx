@@ -374,7 +374,11 @@ export default function ApartmentsList() {
                 }`}
                 title="Floor view"
               >
-                <span className="text-base">▦</span>
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="4" y="2" width="16" height="20" rx="1" />
+                  <line x1="4" y1="8" x2="20" y2="8" />
+                  <line x1="4" y1="14" x2="20" y2="14" />
+                </svg>
               </button>
             </div>
             {isAdmin && (
