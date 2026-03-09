@@ -23,6 +23,13 @@ function getEmbedPreviewUrl(url: string): string {
   }
 }
 
+/** Prefer embed URL for known 3D hosts; otherwise use original URL so iframe still tries to show content. */
+function getIframeSrc(url: string): string {
+  const u = url.trim();
+  if (u.includes('matterport.com') || u.includes('sketchfab.com')) return getEmbedPreviewUrl(u);
+  return u;
+}
+
 type Attachment = {
   id: number;
   fileType: string;
@@ -59,7 +66,6 @@ export default function LandingView({ token }: { token: string }) {
   const [apartment, setApartment] = useState<LandingApartment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [active3dUrl, setActive3dUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,10 +113,10 @@ export default function LandingView({ token }: { token: string }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-center">
-          <div className="mb-4 inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
-          <p className="text-gray-600">Loading...</p>
+          <div className="mb-4 inline-block h-10 w-10 animate-spin rounded-full border-4 border-slate-300 border-t-slate-600" />
+          <p className="text-slate-600">Loading...</p>
         </div>
       </div>
     );
@@ -118,9 +124,9 @@ export default function LandingView({ token }: { token: string }) {
 
   if (error || !apartment) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center max-w-md">
-          <p className="text-red-800 font-medium">{error || 'Not found'}</p>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+        <div className="max-w-md rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+          <p className="font-medium text-red-800">{error || 'Not found'}</p>
           <p className="mt-2 text-sm text-red-600">This link may be invalid or expired.</p>
         </div>
       </div>
@@ -128,225 +134,235 @@ export default function LandingView({ token }: { token: string }) {
   }
 
   const attachments = apartment.attachments || [];
+  const agreementFiles = attachments.filter((a) => a.fileType === 'AGREEMENT');
   const progressImages = attachments.filter((a) => a.fileType === 'PROGRESS_IMAGE');
   const floorplans = attachments.filter((a) => a.fileType === 'FLOORPLAN');
   const images = attachments.filter((a) => a.fileType === 'IMAGE');
-  const threeDLinks = [
+
+  const threeDSections = [
     { label: '3D Tour', url: apartment.matterLink },
     { label: 'Exterior', url: apartment.exteriorLink },
     { label: 'Exterior 2', url: apartment.exteriorLink2 },
   ].filter((x) => x.url);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+    <div className="min-h-screen bg-slate-50">
+      {/* Wide container: use most of viewport */}
+      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Hero / Header — full width */}
+        <header className="mb-10 rounded-2xl border border-slate-200 bg-white px-6 py-8 shadow-sm sm:px-8 lg:px-10">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             Apartment {apartment.apartmentNo}
           </h1>
-          <p className="mt-1 text-gray-500">
+          <p className="mt-2 text-lg text-slate-600">
             {apartment.district_name} — {apartment.building_name}
           </p>
-          <div className="mt-3">
+          <div className="mt-4">
             <span
-              className={`inline-flex rounded-full border px-3 py-1 text-sm font-medium ${getStatusColor(apartment.status)}`}
+              className={`inline-flex rounded-full border px-4 py-1.5 text-sm font-medium ${getStatusColor(apartment.status)}`}
             >
               {getStatusLabel(apartment.status)}
             </span>
           </div>
-        </div>
+        </header>
 
-        {/* 3D previews */}
-        {threeDLinks.length > 0 && (
-          <section className="card p-6 mb-6">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">3D Preview</h2>
-            <div className="space-y-3">
-              {threeDLinks.map(({ label, url }) => (
-                <div
-                  key={label}
-                  className="flex flex-col sm:flex-row gap-2 items-start rounded-xl border border-gray-200 bg-gray-50 p-4"
-                >
-                  <div className="flex-1 min-w-0">
-                    <span className="text-xs font-medium uppercase text-gray-500">{label}</span>
-                    <p className="text-sm text-gray-900 truncate">{url}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setActive3dUrl(getEmbedPreviewUrl(url!))}
-                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                    >
-                      Preview
-                    </button>
-                    <a
-                      href={url!}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    >
-                      Open
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Key info */}
-        <section className="card p-6 mb-6">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Details</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {/* Information block — grid, wide */}
+        <section className="mb-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+          <h2 className="mb-6 text-xl font-semibold text-slate-900">Information</h2>
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+            {apartment.ownershipName && (
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Owner</p>
+                <p className="mt-1 font-medium text-slate-900">{apartment.ownershipName}</p>
+              </div>
+            )}
             <div>
-              <p className="text-xs font-medium uppercase text-gray-500">Area</p>
-              <p className="font-medium text-gray-900">{apartment.sqm ? `${apartment.sqm} m²` : '-'}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Area</p>
+              <p className="mt-1 font-medium text-slate-900">{apartment.sqm ? `${apartment.sqm} sq/m` : '—'}</p>
             </div>
             <div>
-              <p className="text-xs font-medium uppercase text-gray-500">Floor</p>
-              <p className="font-medium text-gray-900">{apartment.floor ?? '-'}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Floor</p>
+              <p className="mt-1 font-medium text-slate-900">{apartment.floor != null ? apartment.floor : '—'}</p>
             </div>
             <div>
-              <p className="text-xs font-medium uppercase text-gray-500">Total price</p>
-              <p className="font-semibold text-gray-900">
-                {apartment.total_price ? `${(apartment.total_price / 1000000).toFixed(1)}M AMD` : '-'}
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Total price</p>
+              <p className="mt-1 font-semibold text-slate-900">
+                {apartment.total_price ? `${(apartment.total_price / 1_000_000).toFixed(1)}M AMD` : '—'}
               </p>
             </div>
             <div>
-              <p className="text-xs font-medium uppercase text-gray-500">Price per m²</p>
-              <p className="font-medium text-gray-900">
-                {apartment.price_sqm ? `${(apartment.price_sqm / 1000).toFixed(0)}K AMD` : '-'}
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Price per m²</p>
+              <p className="mt-1 font-medium text-slate-900">
+                {apartment.price_sqm ? `${(apartment.price_sqm / 1000).toFixed(0)}K AMD` : '—'}
               </p>
             </div>
           </div>
           {apartment.floorplanDistribution && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs font-medium uppercase text-gray-500 mb-1">Floor plan</p>
-              <p className="text-sm text-gray-900 whitespace-pre-wrap">{apartment.floorplanDistribution}</p>
+            <div className="mt-6 border-t border-slate-100 pt-6">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Floor plan description</p>
+              <p className="mt-2 whitespace-pre-wrap text-slate-900">{apartment.floorplanDistribution}</p>
             </div>
           )}
           {apartment.notes && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs font-medium uppercase text-gray-500 mb-1">Notes</p>
-              <p className="text-sm text-gray-900 whitespace-pre-wrap">{apartment.notes}</p>
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Notes</p>
+              <p className="mt-2 whitespace-pre-wrap text-slate-900">{apartment.notes}</p>
             </div>
           )}
         </section>
 
-        {/* Progress images */}
-        {progressImages.length > 0 && (
-          <section className="card p-6 mb-6">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Construction progress</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {progressImages.map((att) => (
+        {/* Legal / PDF documents — icon + Download like CRM */}
+        {agreementFiles.length > 0 && (
+          <section className="mb-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+            <h2 className="mb-6 text-xl font-semibold text-slate-900">Legal Documents</h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+              {agreementFiles.map((file) => (
                 <a
-                  key={att.id}
-                  href={att.fileUrl}
+                  key={file.id}
+                  href={file.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block rounded-lg overflow-hidden border border-gray-200 aspect-square"
+                  className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-6 transition-colors hover:bg-slate-100"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={att.fileUrl}
-                    alt={att.fileName || 'Progress'}
-                    className="h-full w-full object-cover"
-                  />
+                  <svg className="h-14 w-14 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                  <span className="mt-2 text-center text-xs font-medium text-slate-600">PDF / Doc</span>
+                  <span className="mt-1 max-w-full truncate px-2 text-center text-xs text-slate-500" title={file.fileName || undefined}>
+                    {file.fileName || 'Document'}
+                  </span>
+                  <span className="mt-2 rounded-lg bg-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700">Download</span>
                 </a>
               ))}
             </div>
           </section>
         )}
 
-        {/* Floor plans */}
+        {/* 2D Floor plans — same style, icon or image */}
         {floorplans.length > 0 && (
-          <section className="card p-6 mb-6">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Floor plans</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <section className="mb-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+            <h2 className="mb-6 text-xl font-semibold text-slate-900">2D Floor plans</h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {floorplans.map((att) => (
                 <a
                   key={att.id}
                   href={att.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block rounded-lg overflow-hidden border border-gray-200"
+                  className="block overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={att.fileUrl}
                     alt={att.fileName || 'Floor plan'}
-                    className="w-full h-auto object-contain max-h-96"
+                    className="h-auto w-full object-contain"
+                    style={{ maxHeight: '28rem' }}
                   />
+                  <div className="border-t border-slate-200 px-4 py-3">
+                    <span className="text-sm font-medium text-slate-700">{att.fileName || 'Floor plan'}</span>
+                    <span className="ml-2 text-xs text-slate-500">— Download</span>
+                  </div>
                 </a>
               ))}
             </div>
           </section>
         )}
 
-        {/* Other images */}
+        {/* 3D — always full preview block: iframe with 3D content visible immediately (no "External link" fallback) */}
+        {threeDSections.map(({ label, url }) => {
+          const iframeSrc = url ? getIframeSrc(url) : '';
+          return (
+            <section key={label} className="mb-10">
+              <h2 className="mb-3 text-xl font-semibold text-slate-900">{label}</h2>
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div
+                  className="relative w-full bg-slate-100"
+                  style={{ minHeight: '70vh' }}
+                >
+                  <iframe
+                    src={iframeSrc}
+                    title={label}
+                    className="absolute inset-0 h-full w-full border-0"
+                    allowFullScreen
+                    allow="autoplay; fullscreen; web-share; xr-spatial-tracking"
+                  />
+                </div>
+                <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-2 text-sm text-slate-500">
+                  <span>Interactive 3D</span>
+                  <a
+                    href={url!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-600 underline hover:text-slate-900"
+                  >
+                    Open in new tab
+                  </a>
+                </div>
+              </div>
+            </section>
+          );
+        })}
+
+        {/* Progress Images / Stages — prominent block */}
+        {progressImages.length > 0 && (
+          <section className="mb-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+            <h2 className="mb-6 text-xl font-semibold text-slate-900">Stages / Construction progress</h2>
+            <p className="mb-6 text-sm text-slate-600">Photo report of the construction progress.</p>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {progressImages.map((att) => (
+                <a
+                  key={att.id}
+                  href={att.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group block overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                >
+                  <div className="aspect-square overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={att.fileUrl}
+                      alt={att.fileName || 'Progress'}
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                  </div>
+                  {att.fileName && (
+                    <div className="border-t border-slate-100 px-3 py-2">
+                      <span className="line-clamp-2 text-xs text-slate-600">{att.fileName}</span>
+                    </div>
+                  )}
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Other photos */}
         {images.length > 0 && (
-          <section className="card p-6 mb-6">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Photos</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <section className="mb-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+            <h2 className="mb-6 text-xl font-semibold text-slate-900">Photos</h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {images.map((att) => (
                 <a
                   key={att.id}
                   href={att.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block rounded-lg overflow-hidden border border-gray-200 aspect-square"
+                  className="group block overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={att.fileUrl}
-                    alt={att.fileName || 'Photo'}
-                    className="h-full w-full object-cover"
-                  />
+                  <div className="aspect-square overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={att.fileUrl}
+                      alt={att.fileName || 'Photo'}
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                  </div>
                 </a>
               ))}
             </div>
           </section>
         )}
       </div>
-
-      {/* 3D modal */}
-      {active3dUrl && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setActive3dUrl(null)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="3D Preview"
-        >
-          <div
-            className="relative flex max-h-[85vh] w-full max-w-4xl flex-col rounded-2xl bg-white shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-              <span className="text-sm font-medium text-gray-700">3D Preview</span>
-              <button
-                type="button"
-                onClick={() => setActive3dUrl(null)}
-                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
-                aria-label="Close"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="relative min-h-[400px] flex-1 overflow-hidden rounded-b-2xl">
-              <iframe
-                src={active3dUrl}
-                title="3D Preview"
-                className="absolute inset-0 h-full w-full border-0"
-                allowFullScreen
-                allow="autoplay; fullscreen; web-share; xr-spatial-tracking"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
