@@ -74,6 +74,10 @@ export const updateApartmentSchema = z.object({
   floorplanDistribution: z.string().max(500).optional().nullable().or(z.literal('').transform(() => null)),
   exteriorLink: z.string().url('Invalid URL').optional().nullable().or(z.literal('').transform(() => null)),
   exteriorLink2: z.string().url('Invalid URL').optional().nullable().or(z.literal('').transform(() => null)),
+  buyerAddress: z.string().max(1000).optional().nullable().or(z.literal('').transform(() => null)),
+  otherBuyers: z.string().max(1000).optional().nullable().or(z.literal('').transform(() => null)),
+  paymentSchedule: z.string().max(2000).optional().nullable().or(z.literal('').transform(() => null)),
+  balanceRemaining: z.union([z.number().min(0), z.null()]).optional(),
   notes: z.string().max(2000).optional().nullable().or(z.literal('').transform(() => null)),
 });
 
