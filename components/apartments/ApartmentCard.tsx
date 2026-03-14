@@ -205,7 +205,11 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
         const floorNum = parseNumber(formData.floor);
         apiData.floor = (floorNum === null || floorNum === 0) ? null : floorNum;
       }
-      
+      if (formData.apartmentType !== undefined) {
+        const typeNum = formData.apartmentType === '' || formData.apartmentType == null ? null : Number(formData.apartmentType);
+        apiData.apartmentType = typeNum !== null && !isNaN(typeNum) ? typeNum : null;
+      }
+
       // Дата - преобразуем в формат YYYY-MM-DD (без времени)
       if (formData.dealDate !== undefined) {
         if (formData.dealDate === null || formData.dealDate === '') {
@@ -280,9 +284,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
       if (formData.paymentSchedule !== undefined) {
         apiData.paymentSchedule = parseString(formData.paymentSchedule);
       }
-      if (formData.balanceRemaining !== undefined) {
-        apiData.balanceRemaining = formData.balanceRemaining === '' || formData.balanceRemaining == null ? null : Number(formData.balanceRemaining);
-      }
+      // balanceRemaining is calculated in UI (Total Price − Total Paid), not sent from form
 
       const response = await fetch(`/api/apartments/${apartmentId}`, {
         method: 'PUT',
@@ -583,7 +585,23 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                 <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
                   Apartment Type
                 </label>
-                <p className="text-base font-medium text-gray-900">{apartment.apartmentType || '-'}</p>
+                {editing ? (
+                  <input
+                    type="number"
+                    min={1}
+                    value={formData.apartmentType ?? ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        apartmentType: e.target.value === '' ? null : parseInt(e.target.value, 10),
+                      })
+                    }
+                    className="input-field"
+                    placeholder="Type number"
+                  />
+                ) : (
+                  <p className="text-base font-medium text-gray-900">{apartment.apartmentType ?? '-'}</p>
+                )}
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -605,17 +623,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                   <p className="text-base font-medium text-gray-900">{apartment.floor ?? '-'}</p>
                 )}
               </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Total Price
-                </label>
-                <p className="text-lg font-semibold text-gray-900">
-                  {apartment.total_price
-                    ? `${(apartment.total_price / 1000000).toFixed(1)}M AMD`
-                    : '-'}
-                </p>
-              </div>
-              
+
               {/* Editable fields below */}
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -694,183 +702,194 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
             </div>
           </div>
 
-          {/* Financial Information Section */}
-          <div className="card p-6">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Financial Information</h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Total Paid
-                </label>
-                {editing ? (
-                  <input
-                    type="number"
-                    value={formData.total_paid || ''}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        total_paid: e.target.value ? parseFloat(e.target.value) : null,
-                      })
-                    }
-                    className="input-field mt-2"
-                  />
-                ) : (
-                  <p className="text-2xl font-bold text-gray-900">
-                    {apartment.total_paid
-                      ? `${(apartment.total_paid / 1000000).toFixed(1)}M AMD`
-                      : '-'}
-                  </p>
-                )}
+          {/* Financial Information Section: Total Price, Total Paid, Balance Remaining (auto) */}
+          {(() => {
+            const totalPrice = apartment.total_price ?? 0;
+            const totalPaid = editing
+              ? (formData.total_paid != null && formData.total_paid !== '' ? Number(formData.total_paid) : apartment.total_paid ?? 0)
+              : (apartment.total_paid ?? 0);
+            const balanceRemaining = totalPrice - totalPaid;
+            const showBalanceRemaining =
+              apartment.status === 'SOLD' || apartment.status === 'RESERVED' || totalPaid > 0;
+            return (
+              <div className="card p-6">
+                <h2 className="mb-4 text-lg font-semibold text-gray-900">Financial Information</h2>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                      Total Price (cost)
+                    </label>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {totalPrice > 0 ? `${(totalPrice / 1000000).toFixed(1)}M AMD` : '–'}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                      Total Paid
+                    </label>
+                    {editing ? (
+                      <input
+                        type="number"
+                        min={0}
+                        value={formData.total_paid ?? ''}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            total_paid: e.target.value === '' ? null : parseFloat(e.target.value),
+                          })
+                        }
+                        className="input-field mt-2"
+                        placeholder="AMD"
+                      />
+                    ) : (
+                      <p className="text-2xl font-bold text-gray-900">
+                        {totalPaid > 0 ? `${(totalPaid / 1000000).toFixed(1)}M AMD` : '–'}
+                      </p>
+                    )}
+                  </div>
+                  {showBalanceRemaining && (
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                        Balance Remaining (to pay)
+                      </label>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {balanceRemaining >= 0
+                          ? `${(balanceRemaining / 1000000).toFixed(1)}M AMD`
+                          : '–'}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">Total Price − Total Paid</p>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Balance
-                </label>
-                <p className="text-2xl font-bold text-gray-900">
-                  {apartment.balance
-                    ? `${(apartment.balance / 1000000).toFixed(1)}M AMD`
-                    : '-'}
-                </p>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Deal Information Section */}
           <div className="card p-6">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Deal Information</h2>
+            <h2 className="mb-5 text-lg font-semibold text-gray-900">Deal Information</h2>
+
             {editing ? (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Deal Date</label>
-                  <input
-                    type="date"
-                    value={
-                      formData.dealDate
-                        ? new Date(formData.dealDate).toISOString().split('T')[0]
-                        : ''
-                    }
-                    onChange={(e) =>
-                      setFormData({ ...formData, dealDate: e.target.value || null })
-                    }
-                    className="input-field"
-                  />
+              <div className="space-y-6">
+                {/* Top row: Deal Date, Ownership Name | Email, Phone | Passport/Tax No */}
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">Deal Date</label>
+                    <input
+                      type="date"
+                      value={
+                        formData.dealDate
+                          ? new Date(formData.dealDate).toISOString().split('T')[0]
+                          : ''
+                      }
+                      onChange={(e) =>
+                        setFormData({ ...formData, dealDate: e.target.value || null })
+                      }
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">Ownership Name</label>
+                    <input
+                      type="text"
+                      value={formData.ownershipName || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, ownershipName: e.target.value || null })
+                      }
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">Email</label>
+                    <input
+                      type="email"
+                      value={formData.email || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value || null })
+                      }
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">Phone</label>
+                    <input
+                      type="text"
+                      value={formData.phone || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value || null })
+                      }
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">Passport/Tax No</label>
+                    <input
+                      type="text"
+                      value={formData.passportTaxNo || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, passportTaxNo: e.target.value || null })
+                      }
+                      className="input-field"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Ownership Name</label>
-                  <input
-                    type="text"
-                    value={formData.ownershipName || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, ownershipName: e.target.value || null })
-                    }
-                    className="input-field"
-                  />
+
+                {/* Middle: full-width fields */}
+                <div className="space-y-4 border-t border-gray-100 pt-6">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">Deal Description (max 500)</label>
+                    <textarea
+                      value={formData.dealDescription || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, dealDescription: e.target.value || null })
+                      }
+                      maxLength={500}
+                      rows={3}
+                      className="input-field"
+                      placeholder="Brief description of the deal"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">{formData.dealDescription?.length || 0}/500</p>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">Buyer Address</label>
+                    <input
+                      type="text"
+                      value={formData.buyerAddress || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, buyerAddress: e.target.value || null })
+                      }
+                      className="input-field"
+                      placeholder="Address of the buyer"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">Other Buyers</label>
+                    <input
+                      type="text"
+                      value={formData.otherBuyers || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, otherBuyers: e.target.value || null })
+                      }
+                      className="input-field"
+                      placeholder="Names of co-buyers"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">Payment Schedule</label>
+                    <textarea
+                      value={formData.paymentSchedule || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, paymentSchedule: e.target.value || null })
+                      }
+                      rows={2}
+                      className="input-field"
+                      placeholder="Payment dates and amounts"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    value={formData.email || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value || null })
-                    }
-                    className="input-field"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Phone</label>
-                  <input
-                    type="text"
-                    value={formData.phone || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value || null })
-                    }
-                    className="input-field"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Passport/Tax No</label>
-                  <input
-                    type="text"
-                    value={formData.passportTaxNo || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, passportTaxNo: e.target.value || null })
-                    }
-                    className="input-field"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Deal Description (max 500 characters)
-                  </label>
-                  <textarea
-                    value={formData.dealDescription || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dealDescription: e.target.value || null })
-                    }
-                    maxLength={500}
-                    rows={4}
-                    className="input-field"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    {formData.dealDescription?.length || 0}/500
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Buyer Address</label>
-                  <input
-                    type="text"
-                    value={formData.buyerAddress || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, buyerAddress: e.target.value || null })
-                    }
-                    className="input-field"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Other Buyers</label>
-                  <input
-                    type="text"
-                    value={formData.otherBuyers || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, otherBuyers: e.target.value || null })
-                    }
-                    className="input-field"
-                    placeholder="Names of co-buyers"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Payment Schedule</label>
-                  <textarea
-                    value={formData.paymentSchedule || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, paymentSchedule: e.target.value || null })
-                    }
-                    rows={2}
-                    className="input-field"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Balance Remaining</label>
-                  <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={formData.balanceRemaining ?? ''}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        balanceRemaining: e.target.value === '' ? null : Number(e.target.value),
-                      })
-                    }
-                    className="input-field"
-                    placeholder="Amount left to pay"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Notes (max 2000 characters)
-                  </label>
+
+                <div className="border-t border-gray-100 pt-6">
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">Notes (max 2000)</label>
                   <textarea
                     value={formData.notes || ''}
                     onChange={(e) =>
@@ -881,15 +900,11 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                     className="input-field"
                     placeholder="Internal notes for this apartment"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
-                    {formData.notes?.length || 0}/2000
-                  </p>
+                  <p className="mt-1 text-xs text-gray-500">{formData.notes?.length || 0}/2000</p>
                 </div>
-                {/* Agreement Files Section */}
-                <div className="col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Agreement (Media Attachment)
-                  </label>
+
+                <div className="border-t border-gray-100 pt-6">
+                  <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500">Agreement (Media Attachment)</label>
                   <FileUpload
                     apartmentId={apartmentId}
                     attachments={normalizeAttachmentsForUpload(apartment.attachments)}
@@ -899,120 +914,88 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Deal Date
-                  </label>
-                  <p className="text-base font-medium text-gray-900">
-                    {apartment.dealDate
-                      ? new Date(apartment.dealDate).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })
-                      : '-'}
-                  </p>
+              <div className="space-y-6">
+                {/* Top row: two columns like the reference */}
+                <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
+                  <div className="space-y-5">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Deal Date</label>
+                      <p className="text-base font-medium text-gray-900">
+                        {apartment.dealDate
+                          ? new Date(apartment.dealDate).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })
+                          : '–'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Email</label>
+                      <p className="text-base font-medium text-gray-900">
+                        {apartment.email ? (
+                          <a href={`mailto:${apartment.email}`} className="text-blue-600 hover:underline">
+                            {apartment.email}
+                          </a>
+                        ) : (
+                          '–'
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Passport/Tax No</label>
+                      <p className="text-base font-medium text-gray-900">{apartment.passportTaxNo || '–'}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-5">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Ownership Name</label>
+                      <p className="text-base font-medium text-gray-900">{apartment.ownershipName || '–'}</p>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Phone</label>
+                      <p className="text-base font-medium text-gray-900">
+                        {apartment.phone ? (
+                          <a href={`tel:${apartment.phone}`} className="text-blue-600 hover:underline">
+                            {apartment.phone}
+                          </a>
+                        ) : (
+                          '–'
+                        )}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Ownership Name
-                  </label>
-                  <p className="text-base font-medium text-gray-900">
-                    {apartment.ownershipName || '-'}
-                  </p>
+
+                {/* Middle: single column for description and new fields */}
+                <div className="space-y-4 border-t border-gray-100 pt-6">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Deal Description</label>
+                    <p className="text-base text-gray-900 whitespace-pre-wrap">{apartment.dealDescription || '–'}</p>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Buyer Address</label>
+                    <p className="text-base text-gray-900">{apartment.buyerAddress || '–'}</p>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Other Buyers</label>
+                    <p className="text-base text-gray-900">{apartment.otherBuyers || '–'}</p>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Payment Schedule</label>
+                    <p className="text-base text-gray-900 whitespace-pre-wrap">{apartment.paymentSchedule || '–'}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Email
-                  </label>
-                  <p className="text-base font-medium text-gray-900">
-                    {apartment.email ? (
-                      <a
-                        href={`mailto:${apartment.email}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {apartment.email}
-                      </a>
-                    ) : (
-                      '-'
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Phone
-                  </label>
-                  <p className="text-base font-medium text-gray-900">
-                    {apartment.phone ? (
-                      <a
-                        href={`tel:${apartment.phone}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {apartment.phone}
-                      </a>
-                    ) : (
-                      '-'
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Passport/Tax No
-                  </label>
-                  <p className="text-base font-medium text-gray-900">
-                    {apartment.passportTaxNo || '-'}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Deal Description
-                  </label>
-                  <p className="text-base text-gray-900 whitespace-pre-wrap">
-                    {apartment.dealDescription || '-'}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Buyer Address
-                  </label>
-                  <p className="text-base text-gray-900">{apartment.buyerAddress || '-'}</p>
-                </div>
-                <div className="col-span-2">
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Other Buyers
-                  </label>
-                  <p className="text-base text-gray-900">{apartment.otherBuyers || '-'}</p>
-                </div>
-                <div className="col-span-2">
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Payment Schedule
-                  </label>
-                  <p className="text-base text-gray-900 whitespace-pre-wrap">{apartment.paymentSchedule || '-'}</p>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Balance Remaining
-                  </label>
-                  <p className="text-base font-medium text-gray-900">
-                    {apartment.balanceRemaining != null
-                      ? `${(apartment.balanceRemaining / 1000000).toFixed(1)}M AMD`
-                      : '-'}
-                  </p>
-                </div>
+
                 {apartment.notes && (
-                  <div className="col-span-2">
-                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                      Notes
-                    </label>
+                  <div className="border-t border-gray-100 pt-6">
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Notes</label>
                     <p className="text-base text-gray-900 whitespace-pre-wrap">{apartment.notes}</p>
                   </div>
                 )}
-                {/* Agreement Files Section */}
-                <div className="col-span-2">
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Agreement (Media Attachment)
-                  </label>
+
+                <div className="border-t border-gray-100 pt-6">
+                  <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500">Agreement (Media Attachment)</label>
                   <FileUpload
                     apartmentId={apartmentId}
                     attachments={normalizeAttachmentsForUpload(apartment.attachments)}
