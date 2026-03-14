@@ -206,7 +206,8 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
         apiData.floor = (floorNum === null || floorNum === 0) ? null : floorNum;
       }
       if (formData.apartmentType !== undefined) {
-        const typeNum = formData.apartmentType === '' || formData.apartmentType == null ? null : Number(formData.apartmentType);
+        const raw = formData.apartmentType;
+        const typeNum = raw == null ? null : Number(raw);
         apiData.apartmentType = typeNum !== null && !isNaN(typeNum) ? typeNum : null;
       }
 
@@ -706,7 +707,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
           {(() => {
             const totalPrice = apartment.total_price ?? 0;
             const totalPaid = editing
-              ? (formData.total_paid != null && formData.total_paid !== '' ? Number(formData.total_paid) : apartment.total_paid ?? 0)
+              ? (typeof formData.total_paid === 'number' ? formData.total_paid : (apartment.total_paid ?? 0))
               : (apartment.total_paid ?? 0);
             const balanceRemaining = totalPrice - totalPaid;
             const showBalanceRemaining =
