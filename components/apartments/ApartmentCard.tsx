@@ -94,6 +94,10 @@ type Apartment = {
   floorplanDistribution: string | null;
   exteriorLink: string | null;
   exteriorLink2: string | null;
+  buyerAddress?: string | null;
+  otherBuyers?: string | null;
+  paymentSchedule?: string | null;
+  balanceRemaining?: number | null;
   building_name: string;
   building_slug: string;
   district_name: string;
@@ -266,6 +270,18 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
       }
       if (formData.notes !== undefined) {
         apiData.notes = parseString(formData.notes);
+      }
+      if (formData.buyerAddress !== undefined) {
+        apiData.buyerAddress = parseString(formData.buyerAddress);
+      }
+      if (formData.otherBuyers !== undefined) {
+        apiData.otherBuyers = parseString(formData.otherBuyers);
+      }
+      if (formData.paymentSchedule !== undefined) {
+        apiData.paymentSchedule = parseString(formData.paymentSchedule);
+      }
+      if (formData.balanceRemaining !== undefined) {
+        apiData.balanceRemaining = formData.balanceRemaining === '' || formData.balanceRemaining == null ? null : Number(formData.balanceRemaining);
       }
 
       const response = await fetch(`/api/apartments/${apartmentId}`, {
@@ -801,6 +817,57 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                   </p>
                 </div>
                 <div className="col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Buyer Address</label>
+                  <input
+                    type="text"
+                    value={formData.buyerAddress || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, buyerAddress: e.target.value || null })
+                    }
+                    className="input-field"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Other Buyers</label>
+                  <input
+                    type="text"
+                    value={formData.otherBuyers || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, otherBuyers: e.target.value || null })
+                    }
+                    className="input-field"
+                    placeholder="Names of co-buyers"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Payment Schedule</label>
+                  <textarea
+                    value={formData.paymentSchedule || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, paymentSchedule: e.target.value || null })
+                    }
+                    rows={2}
+                    className="input-field"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Balance Remaining</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={formData.balanceRemaining ?? ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        balanceRemaining: e.target.value === '' ? null : Number(e.target.value),
+                      })
+                    }
+                    className="input-field"
+                    placeholder="Amount left to pay"
+                  />
+                </div>
+                <div className="col-span-2">
                   <label className="mb-1 block text-sm font-medium text-gray-700">
                     Notes (max 2000 characters)
                   </label>
@@ -903,6 +970,34 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                   </label>
                   <p className="text-base text-gray-900 whitespace-pre-wrap">
                     {apartment.dealDescription || '-'}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Buyer Address
+                  </label>
+                  <p className="text-base text-gray-900">{apartment.buyerAddress || '-'}</p>
+                </div>
+                <div className="col-span-2">
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Other Buyers
+                  </label>
+                  <p className="text-base text-gray-900">{apartment.otherBuyers || '-'}</p>
+                </div>
+                <div className="col-span-2">
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Payment Schedule
+                  </label>
+                  <p className="text-base text-gray-900 whitespace-pre-wrap">{apartment.paymentSchedule || '-'}</p>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Balance Remaining
+                  </label>
+                  <p className="text-base font-medium text-gray-900">
+                    {apartment.balanceRemaining != null
+                      ? `${(apartment.balanceRemaining / 1000000).toFixed(1)}M AMD`
+                      : '-'}
                   </p>
                 </div>
                 {apartment.notes && (

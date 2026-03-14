@@ -7,6 +7,21 @@
 
 ---
 
+## 🆕 New Apartment Fields (March 2026)
+
+Ապարտամենտի օբյեկտներում ավելացվել են 4 նոր դաշտ (բոլոր endpoint-ներում, որտեղ վերադարձվում է apartment):
+
+| API field (JSON)     | Type    | Description (EN) |
+|----------------------|---------|------------------|
+| `buyer_address`      | string  | Buyer's address (text). |
+| `other_buyers`       | string  | Other buyers — names of co-buyers (text). |
+| `payment_schedule`   | string  | Payment schedule (text). |
+| `balance_remaining`   | number  | Amount remaining to pay until full payment (AMD). |
+
+Թարմացնելու համար (dashboard): `PUT /api/apartments/{id}` body-ում օգտագործել camelCase — `buyerAddress`, `otherBuyers`, `paymentSchedule`, `balanceRemaining`.
+
+---
+
 ## 📋 Full Data API — Բոլոր տվյալները մեկ JSON-ում (GET)
 
 Ստանալ **բոլոր** տվյալները **մեկ** հարցումով: Districts → Buildings → Apartments (attachments-ով միասին): Արտաքին թիմը կարող է փոխարինել 4-5 առանձին հարցումները մեկ հարցումով:
@@ -386,6 +401,11 @@ curl -L -X GET "https://meluviscrm.vercel.app/api/external/apartments/1" \
 - `floorplan_distribution` (string, nullable, max 500) - Պլանավորման բաշխում
 - `exterior_link` (string, nullable) - Արտաքին հղում 1
 - `exterior_link2` (string, nullable) - Արտաքին հղում 2
+- **Նոր դաշտեր (2026):**
+- `buyer_address` (string, nullable) - Գնորդի հասցե / Buyer's address
+- `other_buyers` (string, nullable) - Այլ գնորդներ (անուններ) / Other buyers (co-buyers names)
+- `payment_schedule` (string, nullable) - Վճարման ժամանկացուց / Payment schedule
+- `balance_remaining` (number, nullable) - Գումարի մնացորդ (AMD) մինչև ամբողջական վճարում / Amount remaining to pay until full payment (AMD)
 - `building_name` (string) - Շենքի անվանում
 - `district_name` (string) - Թաղամասի անվանում
 - `attachments` (array) - Կցված ֆայլերի զանգված
