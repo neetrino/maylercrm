@@ -64,6 +64,27 @@ export async function PUT(
     if (validatedData.phone !== undefined) {
       updateData.phone = validatedData.phone;
     }
+    if (validatedData.sales_type !== undefined) {
+      updateData.salesType = validatedData.sales_type;
+    }
+    if (validatedData.price_sqm !== undefined) {
+      updateData.priceSqm = validatedData.price_sqm;
+    }
+    if (validatedData.total_paid !== undefined) {
+      updateData.totalPaid = validatedData.total_paid;
+    }
+    if (validatedData.buyer_address !== undefined) {
+      updateData.buyerAddress = validatedData.buyer_address;
+    }
+    if (validatedData.other_buyers !== undefined) {
+      updateData.otherBuyers = validatedData.other_buyers;
+    }
+    if (validatedData.payment_schedule !== undefined) {
+      updateData.paymentSchedule = validatedData.payment_schedule;
+    }
+    if (validatedData.deal_description !== undefined) {
+      updateData.dealDescription = validatedData.deal_description;
+    }
 
     // Используем метод update для обновления всех полей
     await apartmentService.update(id, updateData);
@@ -96,6 +117,13 @@ export async function PUT(
       email: apartment.email,
       passport_tax_no: apartment.passportTaxNo,
       phone: apartment.phone,
+      sales_type: apartment.salesType?.toLowerCase() ?? null,
+      price_sqm: apartment.priceSqm != null ? Number(apartment.priceSqm) : null,
+      total_paid: apartment.totalPaid != null ? Number(apartment.totalPaid) : null,
+      buyer_address: apartment.buyerAddress,
+      other_buyers: apartment.otherBuyers,
+      payment_schedule: apartment.paymentSchedule,
+      deal_description: apartment.dealDescription,
       updated_at: apartment.updatedAt.toISOString(),
     });
   } catch (error) {

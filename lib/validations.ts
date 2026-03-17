@@ -92,4 +92,18 @@ export const updateApartmentStatusSchema = z.object({
   email: z.string().email('Invalid email').optional().nullable().or(z.literal('').transform(() => null)),
   passport_tax_no: z.string().max(100).optional().nullable().or(z.literal('').transform(() => null)),
   phone: z.string().max(50).optional().nullable().or(z.literal('').transform(() => null)),
+  // Поля, доступные для изменения через внешний API
+  sales_type: salesTypeSchema
+    .or(
+      z.enum(['unsold', 'mortgage', 'cash', 'timebased']).transform((val) =>
+        val.toUpperCase() as 'UNSOLD' | 'MORTGAGE' | 'CASH' | 'TIMEBASED'
+      )
+    )
+    .optional(),
+  price_sqm: z.union([z.number().min(0), z.null()]).optional().or(z.literal('').transform(() => null)),
+  total_paid: z.union([z.number().min(0), z.null()]).optional().or(z.literal('').transform(() => null)),
+  buyer_address: z.string().max(1000).optional().nullable().or(z.literal('').transform(() => null)),
+  other_buyers: z.string().max(1000).optional().nullable().or(z.literal('').transform(() => null)),
+  payment_schedule: z.string().max(2000).optional().nullable().or(z.literal('').transform(() => null)),
+  deal_description: z.string().max(2000).optional().nullable().or(z.literal('').transform(() => null)),
 });
