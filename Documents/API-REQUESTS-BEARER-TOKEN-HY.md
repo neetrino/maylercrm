@@ -457,6 +457,13 @@ curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/1/status" \
   - `email` (string, optional) - Email
   - `passport_tax_no` (string, optional) - Անձնագիր/Հարկային համար
   - `phone` (string, optional) - Հեռախոս
+  - `sales_type` (string, optional) - Վճարման եղանակ: `unsold`, `mortgage`, `cash`, `timebased`
+  - `price_sqm` (number, optional, nullable) - Արժեքը 1/քմ
+  - `total_paid` (number, optional, nullable) - Կանխավճար
+  - `buyer_address` (string, optional, nullable) - Հասցե
+  - `other_buyers` (string, optional, nullable) - Այլ սեփականատերեր
+  - `payment_schedule` (string, optional, nullable) - Տարաժամկետի պայմաններ
+  - `deal_description` (string, optional, nullable) - Այլ նշումներ
 
 **Վավեր կարգավիճակի արժեքներ:**
 - `upcoming` - Առաջիկա
@@ -474,6 +481,13 @@ curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/1/status" \
   "email": "john@example.com",
   "passport_tax_no": "123456789",
   "phone": "+37412345678",
+  "sales_type": "cash",
+  "price_sqm": 1200.5,
+  "total_paid": 50000,
+  "buyer_address": null,
+  "other_buyers": null,
+  "payment_schedule": null,
+  "deal_description": null,
   "updated_at": "2026-01-20T13:45:01.058Z"
 }
 ```
@@ -486,6 +500,13 @@ curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/1/status" \
 - `email` (string, nullable) - Email
 - `passport_tax_no` (string, nullable) - Անձնագիր/Հարկային համար
 - `phone` (string, nullable) - Հեռախոս
+- `sales_type` (string, nullable) - Վճարման եղանակ
+- `price_sqm` (number, nullable) - Արժեքը 1/քմ
+- `total_paid` (number, nullable) - Կանխավճար
+- `buyer_address` (string, nullable) - Հասցե
+- `other_buyers` (string, nullable) - Այլ սեփականատերեր
+- `payment_schedule` (string, nullable) - Տարաժամկետի պայմաններ
+- `deal_description` (string, nullable) - Այլ նշումներ
 - `updated_at` (string, ISO 8601) - Թարմացման ամսաթիվ
 
 **Հարցումների օրինակներ:**

@@ -320,6 +320,13 @@ curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/1/status" \
   - `email` (string, optional) - Email
   - `passport_tax_no` (string, optional) - Паспорт/Налоговый номер
   - `phone` (string, optional) - Телефон
+  - `sales_type` (string, optional) - Способ оплаты: `unsold`, `mortgage`, `cash`, `timebased`
+  - `price_sqm` (number, optional, nullable) - Цена за 1 кв.м
+  - `total_paid` (number, optional, nullable) - Предоплата
+  - `buyer_address` (string, optional, nullable) - Адрес
+  - `other_buyers` (string, optional, nullable) - Другие собственники
+  - `payment_schedule` (string, optional, nullable) - Условия рассрочки
+  - `deal_description` (string, optional, nullable) - Другие примечания
 
 **Валидные значения статуса:**
 - `upcoming` - Предстоящая
@@ -337,6 +344,13 @@ curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/1/status" \
   "email": "john@example.com",
   "passport_tax_no": "123456789",
   "phone": "+37412345678",
+  "sales_type": "cash",
+  "price_sqm": 1200.5,
+  "total_paid": 50000,
+  "buyer_address": null,
+  "other_buyers": null,
+  "payment_schedule": null,
+  "deal_description": null,
   "updated_at": "2026-01-20T13:45:01.058Z"
 }
 ```
@@ -349,6 +363,13 @@ curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/1/status" \
 - `email` (string, nullable) - Email
 - `passport_tax_no` (string, nullable) - Паспорт/Налоговый номер
 - `phone` (string, nullable) - Телефон
+- `sales_type` (string, nullable) - Способ оплаты
+- `price_sqm` (number, nullable) - Цена за 1 кв.м
+- `total_paid` (number, nullable) - Предоплата
+- `buyer_address` (string, nullable) - Адрес
+- `other_buyers` (string, nullable) - Другие собственники
+- `payment_schedule` (string, nullable) - Условия рассрочки
+- `deal_description` (string, nullable) - Другие примечания
 - `updated_at` (string, ISO 8601) - Дата обновления
 
 **Примеры запросов:**
