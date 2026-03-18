@@ -141,10 +141,17 @@ export async function PUT(
       updateData.dealDescription = validatedData.deal_description;
     }
 
-    // Используем метод update для обновления всех полей
-    await apartmentService.update(id, updateData);
-    
-    // Получаем обновленную квартиру
+    try {
+      await apartmentService.update(id, updateData);
+    } catch (e: unknown) {
+      const code =
+        e && typeof e === 'object' && 'code' in e ? String((e as { code: string }).code) : '';
+      if (code === 'P2025') {
+        return NextResponse.json({ error: 'Apartment not found' }, { status: 404 });
+      }
+      throw e;
+    }
+
     const apartment = await apartmentService.getById(id);
     
     if (!apartment) {
