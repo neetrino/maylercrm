@@ -100,8 +100,29 @@ export const updateApartmentStatusSchema = z.object({
       )
     )
     .optional(),
-  price_sqm: z.union([z.number().min(0), z.null()]).optional().or(z.literal('').transform(() => null)),
-  total_paid: z.union([z.number().min(0), z.null()]).optional().or(z.literal('').transform(() => null)),
+  // Query string / JSON may send numbers as strings (e.g. price_sqm=700000.0)
+  price_sqm: z.preprocess(
+    (v) => {
+      if (v === '' || v === null || v === undefined) return undefined;
+      if (typeof v === 'string') {
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? n : v;
+      }
+      return v;
+    },
+    z.union([z.number().min(0), z.null()]).optional()
+  ),
+  total_paid: z.preprocess(
+    (v) => {
+      if (v === '' || v === null || v === undefined) return undefined;
+      if (typeof v === 'string') {
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? n : v;
+      }
+      return v;
+    },
+    z.union([z.number().min(0), z.null()]).optional()
+  ),
   buyer_address: z.string().max(1000).optional().nullable().or(z.literal('').transform(() => null)),
   other_buyers: z.string().max(1000).optional().nullable().or(z.literal('').transform(() => null)),
   payment_schedule: z.string().max(2000).optional().nullable().or(z.literal('').transform(() => null)),

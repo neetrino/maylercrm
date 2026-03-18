@@ -448,9 +448,17 @@ curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/1/status" \
   }'
 ```
 
+**Օրինակ query string-ով (առանց JSON body):**
+```bash
+curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/10/status?status=available&deal_date=2025-05-05&ownership_name=Test&email=a@b.am&passport_tax_no=1&phone=37400000000&sales_type=unsold&price_sqm=700000&total_paid=0" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Նշում.** Կարելի է ուղարկել դաշտերը **JSON body**-ով կամ **query string**-ով (URL-ում `?status=available&deal_date=...`). Եթե նախկինում սխալ էր տալիս «Invalid status value», պատճառը հաճախ այն էր, որ `status`-ը միայն query-ում էր, իսկ API-ն սպասում էր դատարկ JSON body:
+
 **Պարամետրեր:**
 - `apartment_id` (number, required) - Բնակարանի ID
-- Body (JSON):
+- Body (JSON) **կամ** query string (նույն անուններով snake_case):
   - `status` (string, required) - Նոր կարգավիճակ
   - `deal_date` (string, optional, ISO 8601 date) - Գործարքի ամսաթիվ (ձևաչափ: YYYY-MM-DD)
   - `ownership_name` (string, optional) - Սեփականատիրոջ անուն

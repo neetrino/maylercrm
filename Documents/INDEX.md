@@ -26,7 +26,11 @@
 
 ## 📥 Импорт данных
 
-- **[IMPORT.md](./IMPORT.md)** - Документация по импорту: Excel, R2, Matter Link, скрипты
+- **[IMPORT.md](./Done%20Tasks/IMPORT.md)** - Документация по импорту: Excel, R2, Matter Link, скрипты
+
+## 📐 Планы и будущие функции
+
+- **[PLAN-INTERACTIVE-FLOOR-PLAN.md](./PLAN-INTERACTIVE-FLOOR-PLAN.md)** - План реализации интерактивного плана этажа (зоны квартир, рисование в системе, hover/click)
 
 ## 📄 Исходные документы
 

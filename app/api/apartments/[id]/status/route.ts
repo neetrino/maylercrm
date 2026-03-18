@@ -38,8 +38,63 @@ export async function PUT(
       );
     }
 
-    const body = await request.json();
-    const validatedData = updateApartmentStatusSchema.parse(body);
+    /** Keys accepted from JSON body or query string (external integrations often use ?status=...&...) */
+    const STATUS_QUERY_KEYS = [
+      'status',
+      'deal_date',
+      'ownership_name',
+      'email',
+      'passport_tax_no',
+      'phone',
+      'sales_type',
+      'price_sqm',
+      'total_paid',
+      'buyer_address',
+      'other_buyers',
+      'payment_schedule',
+      'deal_description',
+    ] as const;
+
+    let jsonBody: Record<string, unknown> = {};
+    const contentType = request.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      try {
+        const text = await request.text();
+        if (text.trim()) {
+          jsonBody = JSON.parse(text) as Record<string, unknown>;
+        }
+      } catch {
+        return NextResponse.json(
+          { error: 'Invalid JSON body' },
+          { status: 400 }
+        );
+      }
+    } else {
+      try {
+        const clone = request.clone();
+        const text = await clone.text();
+        if (text.trim()) {
+          try {
+            jsonBody = JSON.parse(text) as Record<string, unknown>;
+          } catch {
+            /* ignore non-JSON body */
+          }
+        }
+      } catch {
+        /* no body */
+      }
+    }
+
+    const merged: Record<string, unknown> = { ...jsonBody };
+    const sp = request.nextUrl.searchParams;
+    for (const key of STATUS_QUERY_KEYS) {
+      const q = sp.get(key);
+      if (q !== null && q !== '' && merged[key] === undefined) {
+        merged[key] = q;
+      }
+    }
+
+    const validatedData = updateApartmentStatusSchema.parse(merged);
 
     // Преобразование данных для обновления
     const updateData: any = {
@@ -128,11 +183,13 @@ export async function PUT(
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const flat = error.flatten();
       return NextResponse.json(
         {
-          error: 'Invalid status value',
-          details:
-            'Status must be one of: upcoming, available, reserved, sold',
+          error: 'Validation failed',
+          details: flat.fieldErrors,
+          message:
+            'Send status in JSON body or as query param. Status: upcoming | available | reserved | sold (case insensitive). Example: PUT with body {"status":"available"} or ?status=available',
         },
         { status: 400 }
       );
