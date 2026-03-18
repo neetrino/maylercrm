@@ -5,6 +5,18 @@
 
 **Կարևոր:** Բոլոր հարցումները պահանջում են `Authorization: Bearer YOUR_API_TOKEN` վերնագիր
 
+### Ստուգում (developer)
+
+Պրոդում Bearer API-ի աշխատանքը ստուգելու համար (GET full + PUT status query + PUT status JSON):
+
+```bash
+VERIFY_API_BASE_URL=https://maylercrm.neetrino.com npm run verify-api
+```
+
+(`.env`-ում պետք է լինի `API_TOKEN` — նույնը, ինչ Vercel-ում։)
+
+**Internal server error** PUT `/api/apartments/.../status`-ի վրա հաճախ էր առաջանում cache revalidation-ից Vercel Route Handler-ում — կոդում դա արդեն անվտանգ է արված (revalidateTag-ը չի կոտրում պատասխանը)։
+
 ---
 
 ## 🆕 New Apartment Fields (March 2026)

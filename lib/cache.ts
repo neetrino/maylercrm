@@ -58,7 +58,15 @@ export function invalidateCache(keys: string[], tags?: string[]): void {
     keys.forEach((key) => cacheInvalidationKeys.add(key));
   }
   if (tags?.length) {
-    tags.forEach((tag) => revalidateTag(tag, 'max'));
+    for (const tag of tags) {
+      try {
+        revalidateTag(tag, 'max');
+      } catch (e) {
+        // Next.js Route Handlers on Vercel often have no incrementalCache store —
+        // revalidateTag throws "static generation store missing" and would break API (500).
+        console.warn('[cache] revalidateTag skipped:', tag, e);
+      }
+    }
   }
 }
 
