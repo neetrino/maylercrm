@@ -1,10 +1,13 @@
 /**
- * Импорт данных из MylerDBActualData.xlsx (4 листа).
+ * Импорт данных из Excel (4 листа).
  * Листы: District, Building, Apartment, Type Media.
  * Синхронизация по apartment_type: для каждой квартиры подставляются данные из Type Media по типу (1–21).
  *
+ * В листе apartments поддерживаются колонки buyer / other buyers / payment schedule (в т.ч. с пробелами в имени).
+ * total_price из Excel не читается — всегда считается как sqm * price_sqm (как в приложении).
+ *
  * Запуск: npx tsx scripts/import-from-excel.ts [путь к xlsx]
- * По умолчанию: import/MylerDBActualData.xlsx
+ * По умолчанию: import/MylerDBActualData-new.xlsx
  */
 
 import * as path from 'path';
@@ -19,7 +22,7 @@ try {
 }
 require('dotenv').config();
 
-const DEFAULT_PATH = path.join(process.cwd(), 'import', 'MylerDBActualData.xlsx');
+const DEFAULT_PATH = path.join(process.cwd(), 'import', 'MylerDBActualData-new.xlsx');
 
 function normalizeSlug(s: string): string {
   return String(s ?? '')
@@ -59,6 +62,19 @@ const STATUSES = ['UPCOMING', 'AVAILABLE', 'RESERVED', 'SOLD'] as const;
 const SALES_TYPES = ['UNSOLD', 'MORTGAGE', 'CASH', 'TIMEBASED'] as const;
 
 type Row = Record<string, unknown>;
+
+/** Значение по нескольким возможным именам колонки (учитывает пробелы в конце заголовка Excel). */
+function cell(row: Row, ...names: string[]): unknown {
+  for (const n of names) {
+    if (n in row && row[n] !== undefined && row[n] !== '') return row[n];
+  }
+  const norm = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+  const want = new Set(names.map(norm));
+  for (const k of Object.keys(row)) {
+    if (want.has(norm(k))) return row[k];
+  }
+  return undefined;
+}
 
 function getSheet(wb: XLSX.WorkBook, nameOrIndex: string | number): Row[] {
   const sheet =
@@ -178,6 +194,9 @@ async function main() {
     const floorplanDistribution = str(row.floorplan_distribution ?? row.floorplanDistribution);
     const exteriorLink = str(row.exterior_link ?? row.exteriorLink);
     const exteriorLink2 = str(row.exterior_link2 ?? row.exteriorLink2);
+    const buyerAddress = str(cell(row, 'buyer_address', 'Buyer Address', 'Buyer Address '));
+    const otherBuyers = str(cell(row, 'other_buyers', 'Other Buyers'));
+    const paymentSchedule = str(cell(row, 'payment_schedule', 'Payment Schedule'));
 
     // Подставить из Type Media по типу, если в квартире пусто
     if (typeRow) {
@@ -209,6 +228,9 @@ async function main() {
       floorplanDistribution,
       exteriorLink,
       exteriorLink2,
+      buyerAddress,
+      otherBuyers,
+      paymentSchedule,
     };
 
     await prisma.apartment.upsert({
@@ -233,6 +255,9 @@ async function main() {
         floorplanDistribution: data.floorplanDistribution,
         exteriorLink: data.exteriorLink,
         exteriorLink2: data.exteriorLink2,
+        buyerAddress: data.buyerAddress,
+        otherBuyers: data.otherBuyers,
+        paymentSchedule: data.paymentSchedule,
       },
     });
   }
