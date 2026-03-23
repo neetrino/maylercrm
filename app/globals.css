@@ -2,6 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Снежинки: зигзаг + разный финальный снос — хаотичнее линейного падения */
+@keyframes login-snowfall {
+  0% {
+    transform: translate3d(0, -6vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.95;
+  }
+  18% {
+    transform: translate3d(var(--snow-d1, 0px), 20vh, 0) rotate(95deg);
+  }
+  38% {
+    transform: translate3d(var(--snow-d2, 0px), 42vh, 0) rotate(185deg);
+  }
+  58% {
+    transform: translate3d(var(--snow-d3, 0px), 64vh, 0) rotate(265deg);
+  }
+  78% {
+    transform: translate3d(var(--snow-d4, 0px), 86vh, 0) rotate(340deg);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate3d(var(--snow-drift, 0px), 112vh, 0) rotate(420deg);
+    opacity: 0.12;
+  }
+}
+
+.login-snowflake {
+  animation-name: login-snowfall;
+  /* linear — резче смена направления на «изломах» траектории */
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  top: -6vh;
+}
+
 @layer base {
   body {
     @apply bg-gray-50 text-gray-900 antialiased;

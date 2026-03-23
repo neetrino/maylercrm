@@ -1,5 +1,6 @@
 'use client';
 
+import Snowfall from '@/components/login/Snowfall';
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -50,7 +51,8 @@ export default function LoginPage() {
         aria-hidden
       />
       <div className="absolute inset-0 bg-black/25" aria-hidden />
-      <div className="relative flex min-h-screen items-center justify-center px-4">
+      <Snowfall />
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="card p-8">
           <div className="mb-8 flex flex-col items-center">
