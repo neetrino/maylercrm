@@ -5,7 +5,7 @@ import LogoutButton from '@/components/layout/LogoutButton';
 import SidebarNav from '@/components/layout/SidebarNav';
 
 const LOGO_URL =
-  'https://pub-02e4900b528c4215ba0bfc3cf1e9934e.r2.dev/meluvis-logo.svg';
+  'https://pub-02e4900b528c4215ba0bfc3cf1e9934e.r2.dev/myler-logo.png';
 
 export default async function DashboardLayout({
   children,
@@ -40,10 +40,10 @@ export default async function DashboardLayout({
           <div className="flex h-16 items-center border-b border-gray-200 px-4">
             <Image
               src={LOGO_URL}
-              alt="Meluvis CRM"
+              alt="Myler"
               width={160}
               height={56}
-              className="h-10 w-auto object-contain object-left brightness-0"
+              className="h-10 w-auto object-contain object-left"
               priority
               unoptimized
             />

@@ -437,6 +437,10 @@ curl -L -X GET "https://meluviscrm.vercel.app/api/external/apartments/1" \
 
 **Endpoint:** `PUT /api/apartments/{apartment_id}/status`
 
+**Կարևոր — `apartment_id` և `apartment_no`:** URL-ում `{apartment_id}` դաշտում **պետք է լինի JSON-ում վերադարձվող ներքին `id`** (տվյալների բազայի primary key), **ոչ թե** `apartment_no` (պլանում գրված համարը՝ `"10"`, `"8-1"`, `"12/1"` և այլն)։ Նույն համարով բնակարանը կարող է ունենալ այլ `id` (օրինակ՝ համար **10** → `id` **343**)։ Հարցումը պետք է լինի `PUT /api/apartments/{այն id-ն, որ full/ցանկից եք ստանում}/status`։ Ստուգել՝ `GET /api/external/full` կամ `GET /api/buildings/{building_id}/apartments` — յուրաքանչյուր օբյեկտում կա `id` և `apartment_no`։
+
+*English:* Use the internal **`id`** from the API JSON in the URL path — **not** the display apartment number (`apartment_no`).
+
 **Հարցում (միայն կարգավիճակ):**
 ```bash
 curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/1/status" \
@@ -460,9 +464,9 @@ curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/1/status" \
   }'
 ```
 
-**Օրինակ query string-ով (առանց JSON body):**
+**Օրինակ query string-ով (առանց JSON body):** *(ճանապարհում `343`-ը օրինակ է՝ փոխարինեք ձեր բնակարանի **`id`**-ով, ոչ թե `apartment_no`-ով)*
 ```bash
-curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/10/status?status=available&deal_date=2025-05-05&ownership_name=Test&email=a@b.am&passport_tax_no=1&phone=37400000000&sales_type=unsold&price_sqm=700000&total_paid=0" \
+curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/343/status?status=available&deal_date=2025-05-05&ownership_name=Test&email=a@b.am&passport_tax_no=1&phone=37400000000&sales_type=unsold&price_sqm=700000&total_paid=0" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
