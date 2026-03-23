@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Eye, Link2, Box } from 'lucide-react';
 import type { Building, District } from '@prisma/client';
 import ApartmentForm from './ApartmentForm';
+
+const APARTMENTS_VIEW_MODE_KEY = 'maylercrm:apartmentsViewMode';
 
 type Attachment = {
   id: number;
@@ -217,6 +219,7 @@ export default function ApartmentsList() {
   const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'floor'>('grid');
+  const skipPersistViewModeOnce = useRef(true);
   const [sortBy, setSortBy] = useState<string>('apartmentNo');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [pagination, setPagination] = useState({
@@ -282,6 +285,29 @@ export default function ApartmentsList() {
     fetchDistricts();
     fetchBuildings();
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(APARTMENTS_VIEW_MODE_KEY);
+      if (raw === 'grid' || raw === 'list' || raw === 'floor') {
+        setViewMode(raw);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (skipPersistViewModeOnce.current) {
+      skipPersistViewModeOnce.current = false;
+      return;
+    }
+    try {
+      localStorage.setItem(APARTMENTS_VIEW_MODE_KEY, viewMode);
+    } catch {
+      /* ignore */
+    }
+  }, [viewMode]);
 
   // Debounce поиска: обновляем searchQuery через 300ms после последнего ввода
   useEffect(() => {
