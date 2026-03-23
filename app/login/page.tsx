@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 const LOGO_URL =
-  'https://pub-02e4900b528c4215ba0bfc3cf1e9934e.r2.dev/meluvis-logo.svg';
+  'https://pub-02e4900b528c4215ba0bfc3cf1e9934e.r2.dev/myler-logo.png';
+const LOGIN_BANNER_URL =
+  'https://pub-02e4900b528c4215ba0bfc3cf1e9934e.r2.dev/login-banner.jpeg';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,16 +43,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="relative min-h-screen">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${LOGIN_BANNER_URL})` }}
+        aria-hidden
+      />
+      <div className="absolute inset-0 bg-black/25" aria-hidden />
+      <div className="relative flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="card p-8">
           <div className="mb-8 flex flex-col items-center">
             <Image
               src={LOGO_URL}
-              alt="Meluvis CRM"
+              alt="Myler"
               width={196}
               height={68}
-              className="h-14 w-auto object-contain brightness-0"
+              className="h-14 w-auto object-contain"
               priority
               unoptimized
             />
@@ -122,6 +131,7 @@ export default function LoginPage() {
             </button>
           </form>
         </div>
+      </div>
       </div>
     </div>
   );
