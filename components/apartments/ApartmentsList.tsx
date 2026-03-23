@@ -623,10 +623,8 @@ export default function ApartmentsList() {
                         const floorLabel = floorNum === -Infinity ? '—' : `Floor ${floorNum}`;
                         const buildingMeta = buildings.find((b) => b.id === firstApt.building.id) as (Building & { district: District; floorPlans?: { floor: number; fileUrl: string; fileName: string | null }[] }) | undefined;
                         const buildingFloorPlan = floorNum !== -Infinity ? buildingMeta?.floorPlans?.find((fp) => fp.floor === floorNum) : undefined;
-                        const apartmentFloorPlan = floorApts
-                          .flatMap((a) => (a.attachments ?? []).filter((at) => at.fileType === 'FLOORPLAN'))
-                          .find(Boolean);
-                        const floorPlanUrl = buildingFloorPlan?.fileUrl ?? apartmentFloorPlan?.fileUrl;
+                        // Floor view: only building-level plans (Buildings → Number of floors), not apartment FLOORPLAN attachments
+                        const floorPlanUrl = buildingFloorPlan?.fileUrl;
                         const isPdf = floorPlanUrl?.toLowerCase().endsWith('.pdf');
                         return (
                           <div key={floorLabel} className="p-6">
