@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Eye, Link2, Box } from 'lucide-react';
 import type { Building, District } from '@prisma/client';
 import ApartmentForm from './ApartmentForm';
+
+const APARTMENTS_VIEW_MODE_KEY = 'maylercrm:apartmentsViewMode';
 
 type Attachment = {
   id: number;
@@ -217,6 +219,7 @@ export default function ApartmentsList() {
   const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'floor'>('grid');
+  const skipPersistViewModeOnce = useRef(true);
   const [sortBy, setSortBy] = useState<string>('apartmentNo');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [pagination, setPagination] = useState({
@@ -282,6 +285,29 @@ export default function ApartmentsList() {
     fetchDistricts();
     fetchBuildings();
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(APARTMENTS_VIEW_MODE_KEY);
+      if (raw === 'grid' || raw === 'list' || raw === 'floor') {
+        setViewMode(raw);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (skipPersistViewModeOnce.current) {
+      skipPersistViewModeOnce.current = false;
+      return;
+    }
+    try {
+      localStorage.setItem(APARTMENTS_VIEW_MODE_KEY, viewMode);
+    } catch {
+      /* ignore */
+    }
+  }, [viewMode]);
 
   // Debounce поиска: обновляем searchQuery через 300ms после последнего ввода
   useEffect(() => {
@@ -614,8 +640,16 @@ export default function ApartmentsList() {
                   : key;
                 return (
                   <div key={key} className="card overflow-hidden">
-                    <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-6 py-4">
                       <h2 className="text-lg font-semibold text-gray-900">{buildingLabel}</h2>
+                      {isAdmin && firstApt ? (
+                        <Link
+                          href={`/admin/buildings/${firstApt.building.id}`}
+                          className="btn-secondary shrink-0 text-sm"
+                        >
+                          Open
+                        </Link>
+                      ) : null}
                     </div>
                     <div className="divide-y divide-gray-100">
                       {sortedFloors.map((floorNum) => {
@@ -623,10 +657,8 @@ export default function ApartmentsList() {
                         const floorLabel = floorNum === -Infinity ? '—' : `Floor ${floorNum}`;
                         const buildingMeta = buildings.find((b) => b.id === firstApt.building.id) as (Building & { district: District; floorPlans?: { floor: number; fileUrl: string; fileName: string | null }[] }) | undefined;
                         const buildingFloorPlan = floorNum !== -Infinity ? buildingMeta?.floorPlans?.find((fp) => fp.floor === floorNum) : undefined;
-                        const apartmentFloorPlan = floorApts
-                          .flatMap((a) => (a.attachments ?? []).filter((at) => at.fileType === 'FLOORPLAN'))
-                          .find(Boolean);
-                        const floorPlanUrl = buildingFloorPlan?.fileUrl ?? apartmentFloorPlan?.fileUrl;
+                        // Floor view: only building-level plans (Buildings → Number of floors), not apartment FLOORPLAN attachments
+                        const floorPlanUrl = buildingFloorPlan?.fileUrl;
                         const isPdf = floorPlanUrl?.toLowerCase().endsWith('.pdf');
                         return (
                           <div key={floorLabel} className="p-6">
