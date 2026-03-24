@@ -4,7 +4,7 @@
  * Синхронизация по apartment_type: для каждой квартиры подставляются данные из Type Media по типу (1–21).
  *
  * В листе apartments поддерживаются колонки buyer / other buyers / payment schedule (в т.ч. с пробелами в имени).
- * total_price из Excel не читается — всегда считается как sqm * price_sqm (как в приложении).
+ * total_price: если задана и price_sqm пуст — price_sqm = total_price / sqm; иначе total = sqm * price_sqm.
  *
  * Запуск: npx tsx scripts/import-from-excel.ts [путь к xlsx]
  * По умолчанию: import/MylerDBActualData-new.xlsx
@@ -60,6 +60,59 @@ function parseDate(val: unknown): string | null {
 
 const STATUSES = ['UPCOMING', 'AVAILABLE', 'RESERVED', 'SOLD'] as const;
 const SALES_TYPES = ['UNSOLD', 'MORTGAGE', 'CASH', 'TIMEBASED'] as const;
+
+type Status = (typeof STATUSES)[number];
+type SalesType = (typeof SALES_TYPES)[number];
+
+/** Подписи из Excel (в т.ч. армянские) → enum статуса */
+const STATUS_ALIASES: Record<string, Status> = {
+  Հասանելի: 'AVAILABLE',
+  հասանելի: 'AVAILABLE',
+  Պահված: 'RESERVED',
+  պահված: 'RESERVED',
+  Վաճառված: 'SOLD',
+  վաճառված: 'SOLD',
+  Առաջիկա: 'UPCOMING',
+  առաջիկա: 'UPCOMING',
+  available: 'AVAILABLE',
+  reserved: 'RESERVED',
+  sold: 'SOLD',
+  upcoming: 'UPCOMING',
+};
+
+/** Подписи из Excel → enum типа продаж */
+const SALES_TYPE_ALIASES: Record<string, SalesType> = {
+  Չվաճառված: 'UNSOLD',
+  չվաճառված: 'UNSOLD',
+  Վաճառք: 'CASH',
+  վաճառք: 'CASH',
+  Իպոտեկ: 'MORTGAGE',
+  իպոտեկ: 'MORTGAGE',
+  Ժամանակավոր: 'TIMEBASED',
+  ժամանակավոր: 'TIMEBASED',
+  unsold: 'UNSOLD',
+  mortgage: 'MORTGAGE',
+  cash: 'CASH',
+  timebased: 'TIMEBASED',
+};
+
+function mapStatus(raw: unknown): Status {
+  const s = String(raw ?? '').trim();
+  if (!s) return 'UPCOMING';
+  const upper = s.toUpperCase();
+  if (STATUSES.includes(upper as Status)) return upper as Status;
+  const alias = STATUS_ALIASES[s] ?? STATUS_ALIASES[s.toLowerCase()];
+  return alias ?? 'UPCOMING';
+}
+
+function mapSalesType(raw: unknown): SalesType {
+  const s = String(raw ?? '').trim();
+  if (!s) return 'UNSOLD';
+  const upper = s.toUpperCase();
+  if (SALES_TYPES.includes(upper as SalesType)) return upper as SalesType;
+  const alias = SALES_TYPE_ALIASES[s] ?? SALES_TYPE_ALIASES[s.toLowerCase()];
+  return alias ?? 'UNSOLD';
+}
 
 type Row = Record<string, unknown>;
 
@@ -174,14 +227,13 @@ async function main() {
     // Floor: в Excel колонка "Floor" (с большой буквы)
     const floorVal = num(row.Floor ?? row.floor);
 
-    const statusRaw = String(row.status ?? '').toUpperCase().trim();
-    const status = STATUSES.includes(statusRaw as (typeof STATUSES)[number]) ? (statusRaw as (typeof STATUSES)[number]) : 'UPCOMING';
-    const salesTypeRaw = String(row.sales_type ?? row.salesType ?? '').toUpperCase().trim();
-    const salesType = SALES_TYPES.includes(salesTypeRaw as (typeof SALES_TYPES)[number]) ? (salesTypeRaw as (typeof SALES_TYPES)[number]) : 'UNSOLD';
+    const status = mapStatus(row.status);
+    const salesType = mapSalesType(row.sales_type ?? row.salesType);
 
     // Из строки квартиры
     let sqm = num(row.sqm);
     let priceSqm = num(row.price_sqm ?? row.priceSqm);
+    const totalPriceFromSheet = num(row.total_price ?? row.totalPrice);
     let floor = floorVal;
     const totalPaid = num(row.total_paid ?? row.totalPaid) ?? 0;
     const dealDate = parseDate(row.deal_date ?? row.dealDate);
@@ -203,6 +255,11 @@ async function main() {
       if (sqm == null) sqm = num(typeRow.sqm);
       if (priceSqm == null) priceSqm = num(typeRow.price_sqm ?? typeRow.priceSqm);
       if (floor == null) floor = num(typeRow.floor);
+    }
+
+    // Если цена за м² не задана, но есть общая цена и площадь — как в приложении считаем от обратного
+    if (priceSqm == null && totalPriceFromSheet != null && totalPriceFromSheet > 0 && sqm != null && sqm > 0) {
+      priceSqm = totalPriceFromSheet / sqm;
     }
 
     const totalPrice = sqm != null && priceSqm != null ? sqm * priceSqm : null;
