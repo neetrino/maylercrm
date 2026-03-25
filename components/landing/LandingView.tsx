@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ImageLightbox from '@/components/ui/ImageLightbox';
+import { formatAmd } from '@/lib/formatAmd';
 
 function getEmbedPreviewUrl(url: string): string {
   try {
@@ -155,8 +156,8 @@ export default function LandingView({ token }: { token: string }) {
     apartment.ownershipName && { icon: 'person', label: 'Owner', value: apartment.ownershipName },
     { icon: 'area', label: 'Area', value: apartment.sqm ? `${apartment.sqm} sq/m` : '—' },
     { icon: 'floor', label: 'Floor', value: apartment.floor != null ? String(apartment.floor) : '—' },
-    { icon: 'price', label: 'Total price', value: apartment.total_price ? `${(apartment.total_price / 1_000_000).toFixed(1)}M AMD` : '—' },
-    { icon: 'price2', label: 'Price per m²', value: apartment.price_sqm ? `${(apartment.price_sqm / 1000).toFixed(0)}K AMD` : '—' },
+    { icon: 'price', label: 'Total price', value: apartment.total_price ? formatAmd(apartment.total_price) : '—' },
+    { icon: 'price2', label: 'Price per m²', value: apartment.price_sqm ? formatAmd(apartment.price_sqm) : '—' },
   ].filter(Boolean) as { icon: string; label: string; value: string }[];
 
   return (
@@ -179,7 +180,7 @@ export default function LandingView({ token }: { token: string }) {
               </span>
               {apartment.total_price && (
                 <span className="text-lg font-semibold text-white">
-                  {(apartment.total_price / 1_000_000).toFixed(1)}M AMD
+                  {formatAmd(apartment.total_price)}
                 </span>
               )}
             </div>
