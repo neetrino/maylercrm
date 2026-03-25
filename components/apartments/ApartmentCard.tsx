@@ -205,6 +205,9 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
         const floorNum = parseNumber(formData.floor);
         apiData.floor = (floorNum === null || floorNum === 0) ? null : floorNum;
       }
+      if (formData.apartmentNo !== undefined) {
+        apiData.apartmentNo = String(formData.apartmentNo).trim();
+      }
       if (formData.apartmentType !== undefined) {
         const raw = formData.apartmentType;
         const typeNum = raw == null ? null : Number(raw);
@@ -575,12 +578,28 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
           <div className="card p-6">
             <h2 className="mb-4 text-lg font-semibold text-gray-900">Basic Information</h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {/* Read-only fields at the top */}
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
                   Apartment No
                 </label>
-                <p className="text-base font-medium text-gray-900">{apartment.apartmentNo}</p>
+                {editing ? (
+                  <input
+                    type="text"
+                    value={formData.apartmentNo ?? ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        apartmentNo: e.target.value,
+                      })
+                    }
+                    className="input-field"
+                    placeholder="e.g. 12-05"
+                    maxLength={50}
+                    required
+                  />
+                ) : (
+                  <p className="text-base font-medium text-gray-900">{apartment.apartmentNo}</p>
+                )}
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
