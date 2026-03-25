@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import FileUpload from './FileUpload';
+import { formatAmd } from '@/lib/formatAmd';
 
 /** Converts 3D link (Matterport, Sketchfab) to iframe embed URL for preview */
 function getEmbedPreviewUrl(url: string): string {
@@ -204,6 +205,9 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
       if (formData.floor !== undefined) {
         const floorNum = parseNumber(formData.floor);
         apiData.floor = (floorNum === null || floorNum === 0) ? null : floorNum;
+      }
+      if (formData.apartmentNo !== undefined) {
+        apiData.apartmentNo = String(formData.apartmentNo).trim();
       }
       if (formData.apartmentType !== undefined) {
         const raw = formData.apartmentType;
@@ -575,12 +579,28 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
           <div className="card p-6">
             <h2 className="mb-4 text-lg font-semibold text-gray-900">Basic Information</h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {/* Read-only fields at the top */}
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
                   Apartment No
                 </label>
-                <p className="text-base font-medium text-gray-900">{apartment.apartmentNo}</p>
+                {editing ? (
+                  <input
+                    type="text"
+                    value={formData.apartmentNo ?? ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        apartmentNo: e.target.value,
+                      })
+                    }
+                    className="input-field"
+                    placeholder="e.g. 12-05"
+                    maxLength={50}
+                    required
+                  />
+                ) : (
+                  <p className="text-base font-medium text-gray-900">{apartment.apartmentNo}</p>
+                )}
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -668,8 +688,8 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                   />
                 ) : (
                   <p className="text-base font-medium text-gray-900">
-                    {apartment.price_sqm
-                      ? `${(apartment.price_sqm / 1000).toFixed(0)}K AMD`
+                    {apartment.price_sqm != null
+                      ? formatAmd(apartment.price_sqm)
                       : '-'}
                   </p>
                 )}
@@ -721,7 +741,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                       Total Price (cost)
                     </label>
                     <p className="text-2xl font-bold text-gray-900">
-                      {totalPrice > 0 ? `${(totalPrice / 1000000).toFixed(1)}M AMD` : '–'}
+                      {totalPrice > 0 ? formatAmd(totalPrice) : '–'}
                     </p>
                   </div>
                   <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -744,7 +764,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                       />
                     ) : (
                       <p className="text-2xl font-bold text-gray-900">
-                        {totalPaid > 0 ? `${(totalPaid / 1000000).toFixed(1)}M AMD` : '–'}
+                        {totalPaid > 0 ? formatAmd(totalPaid) : '–'}
                       </p>
                     )}
                   </div>
@@ -755,7 +775,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                       </label>
                       <p className="text-2xl font-bold text-gray-900">
                         {balanceRemaining >= 0
-                          ? `${(balanceRemaining / 1000000).toFixed(1)}M AMD`
+                          ? formatAmd(balanceRemaining)
                           : '–'}
                       </p>
                       <p className="mt-1 text-xs text-gray-500">Total Price − Total Paid</p>

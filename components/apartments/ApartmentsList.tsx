@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { Eye, Link2, Box } from 'lucide-react';
 import type { Building, District } from '@prisma/client';
 import ApartmentForm from './ApartmentForm';
+import { formatAmd } from '@/lib/formatAmd';
 
 const APARTMENTS_VIEW_MODE_KEY = 'maylercrm:apartmentsViewMode';
 
@@ -151,19 +152,19 @@ const ApartmentCardItem = memo(({
         <div className="flex justify-between gap-2">
           <span className="text-gray-500">Price</span>
           <span className="font-semibold text-gray-900 tabular-nums">
-            {apt.total_price ? `${(apt.total_price / 1000000).toFixed(1)}M` : '—'}
+            {apt.total_price ? formatAmd(apt.total_price) : '—'}
           </span>
         </div>
         <div className="flex justify-between gap-2">
           <span className="text-gray-500">Paid</span>
           <span className="font-medium text-gray-900 tabular-nums">
-            {apt.total_paid ? `${(apt.total_paid / 1000000).toFixed(1)}M` : '—'}
+            {apt.total_paid ? formatAmd(apt.total_paid) : '—'}
           </span>
         </div>
         <div className="flex justify-between gap-2">
           <span className="text-gray-500">Balance</span>
           <span className="font-medium text-gray-900 tabular-nums">
-            {apt.balance ? `${(apt.balance / 1000000).toFixed(1)}M` : '—'}
+            {apt.balance ? formatAmd(apt.balance) : '—'}
           </span>
         </div>
       </div>
@@ -773,19 +774,13 @@ export default function ApartmentsList() {
                       {apt.sqm ? `${apt.sqm} m²` : '-'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-semibold text-gray-900">
-                      {apt.total_price
-                        ? `${(apt.total_price / 1000000).toFixed(1)}M AMD`
-                        : '-'}
+                      {apt.total_price ? formatAmd(apt.total_price) : '-'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900">
-                      {apt.total_paid
-                        ? `${(apt.total_paid / 1000000).toFixed(1)}M AMD`
-                        : '-'}
+                      {apt.total_paid ? formatAmd(apt.total_paid) : '-'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900">
-                      {apt.balance
-                        ? `${(apt.balance / 1000000).toFixed(1)}M AMD`
-                        : '-'}
+                      {apt.balance ? formatAmd(apt.balance) : '-'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                       <Link
