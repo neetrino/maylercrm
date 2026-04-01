@@ -42,8 +42,10 @@ export const apartmentService = {
     const sortOrder = filters?.sortOrder || 'asc';
 
     // Маппинг полей для сортировки
-    let orderBy: any = {};
-    
+    let orderBy: Prisma.ApartmentOrderByWithRelationInput = {
+      apartmentNo: sortOrder,
+    };
+
     switch (sortBy) {
       case 'apartmentNo':
         orderBy = { apartmentNo: sortOrder };
@@ -371,7 +373,7 @@ export const apartmentService = {
     });
   },
 
-  async update(id: number, data: Partial<Apartment>) {
+  async update(id: number, data: Prisma.ApartmentUpdateInput) {
     // Если обновляются sqm или priceSqm, пересчитываем totalPrice
     if (data.sqm !== undefined || data.priceSqm !== undefined) {
       const current = await prisma.apartment.findUnique({

@@ -4,6 +4,7 @@ import { apartmentService } from '@/services/apartment.service';
 import { updateApartmentStatusSchema } from '@/lib/validations';
 import { invalidateCache, cacheKeys, cacheTags } from '@/lib/cache';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 export async function PUT(
   request: NextRequest,
@@ -97,7 +98,7 @@ export async function PUT(
     const validatedData = updateApartmentStatusSchema.parse(merged);
 
     // Преобразование данных для обновления
-    const updateData: any = {
+    const updateData: Prisma.ApartmentUpdateInput = {
       status: validatedData.status,
     };
 

@@ -1,7 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LabelList } from 'recharts';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+  LabelList,
+} from 'recharts';
+import type { LegendPayload } from 'recharts/types/component/DefaultLegendContent';
 
 type FinancialData = {
   sold: {
@@ -194,7 +203,7 @@ export default function FinancialSummary() {
                   outerRadius={90}
                   fill="#8884d8"
                   dataKey="value"
-                  label={(props: any) => {
+                  label={(props: { percent?: number }) => {
                     const { percent } = props;
                     if (percent !== undefined && percent > 0.05) {
                       return `${(percent * 100).toFixed(0)}%`;
@@ -217,8 +226,10 @@ export default function FinancialSummary() {
                 <Legend
                   verticalAlign="bottom"
                   height={60}
-                  formatter={(value: string, entry: any) => {
-                    const percent = entry.payload?.percent;
+                  formatter={(value: string, entry: LegendPayload) => {
+                    const percent = (
+                      entry.payload as { percent?: number } | undefined
+                    )?.percent;
                     return `${value}: ${percent ? (percent * 100).toFixed(0) : 0}%`;
                   }}
                   iconType="circle"

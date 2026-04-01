@@ -14,3 +14,4 @@ maylercrm/
 ```
 
 **Նպատակային (չափ B).** երկարաժամկետում feature-based `src/features/*` — տե՛ս `01-ARCHITECTURE.md`։
+**Export-ներ.** `components/`, `lib/` — նախընտրելի **named** export (տե՛ս `DECISIONS.md`); Next.js-ի `app/` էջերը — default export ըստ պահանջի։

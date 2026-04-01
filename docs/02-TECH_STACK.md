@@ -14,5 +14,6 @@
 | Validation | Zod | ^3.23.8 |
 | Storage | Cloudflare R2 (@aws-sdk/client-s3) | ^3.985.0 |
 | Charts | Recharts | ^3.6.0 |
+| Unit tests | Vitest | ^4.x (`npm run test`) |
 
-**Package manager (ներկա).** npm — `package-lock.json`։ Նախագծի կանոններում որպես ստանդարտ նշված է pnpm; անցումը — `DECISIONS.md`-ում։
+**Package manager (կանոնական այս repo-ում).** **npm** — `package-lock.json`։ Տեղադրում. `npm install`։ Այլ գործիքներ (pnpm) չեն օգտագործվում — տե՛ս `DECISIONS.md`։

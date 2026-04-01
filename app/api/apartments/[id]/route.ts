@@ -4,6 +4,7 @@ import { apartmentService } from '@/services/apartment.service';
 import { updateApartmentSchema } from '@/lib/validations';
 import { invalidateCache, cacheKeys, cacheTags } from '@/lib/cache';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 export async function GET(
   request: NextRequest,
@@ -75,7 +76,7 @@ export async function PUT(
     const validatedData = updateApartmentSchema.parse(body);
 
     // Преобразование данных для Prisma
-    const updateData: any = { ...validatedData };
+    const updateData: Prisma.ApartmentUpdateInput = { ...validatedData };
 
     // Преобразование даты
     if (validatedData.dealDate !== undefined) {

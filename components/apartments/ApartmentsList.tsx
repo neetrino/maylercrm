@@ -1,214 +1,21 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Eye, Link2, Box, FileSpreadsheet } from 'lucide-react';
+import { FileSpreadsheet } from 'lucide-react';
 import type { Building, District } from '@prisma/client';
 import ApartmentForm from './ApartmentForm';
+import { ApartmentCardItem } from './ApartmentCardItem';
+import type { ApartmentListRow } from './apartmentListTypes';
 import { formatAmd } from '@/lib/formatAmd';
 
 const APARTMENTS_VIEW_MODE_KEY = 'maylercrm:apartmentsViewMode';
 
-type Attachment = {
-  id: number;
-  fileType: string;
-  fileUrl: string;
-  fileName?: string | null;
-};
-
-type Apartment = {
-  id: number;
-  apartmentNo: string;
-  status: string;
-  sqm: number | null;
-  total_price: number | null;
-  total_paid: number | null;
-  balance: number | null;
-  floor?: number | null;
-  building: Building & { district: District };
-  updatedAt: string;
-  attachments?: Attachment[];
-  matter_link?: string | null;
-  matterLink?: string | null;
-  landingToken?: string | null;
-};
-
-/** Convert 3D link to embed URL for iframe preview */
-function getEmbedPreviewUrl(url: string): string {
-  try {
-    const u = url.trim();
-    if (u.includes('matterport.com')) {
-      const mMatch = u.match(/[?&]m=([^&]+)/);
-      if (mMatch) return `https://my.matterport.com/show/?m=${mMatch[1]}`;
-      const spaceMatch = u.match(/\/space\/([A-Za-z0-9_-]+)/);
-      if (spaceMatch) return `https://my.matterport.com/show/?m=${spaceMatch[1]}`;
-      return u;
-    }
-    if (u.includes('sketchfab.com')) {
-      const match = u.match(/3d-models\/([a-f0-9]+)/i) || u.match(/models\/([a-f0-9]+)/i);
-      if (match) return `https://sketchfab.com/models/${match[1]}/embed`;
-      return u;
-    }
-    return u;
-  } catch {
-    return url;
-  }
-}
-
-// Мемоизированный компонент карточки квартиры
-const ApartmentCardItem = memo(({
-  apt,
-  onStatusChange,
-  getStatusColor,
-  onOpenPreview,
-  onLandingCopied,
-}: {
-  apt: Apartment;
-  onStatusChange: (id: number, status: string) => void;
-  getStatusColor: (status: string) => string;
-  onOpenPreview: (url: string) => void;
-  onLandingCopied?: () => void;
-}) => {
-  const router = useRouter();
-  const [landingCopying, setLandingCopying] = useState(false);
-  const [landingJustCopied, setLandingJustCopied] = useState(false);
-  const matterUrl = apt.matter_link ?? apt.matterLink ?? null;
-  const embedUrl = matterUrl ? getEmbedPreviewUrl(matterUrl) : null;
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Don't navigate if user clicked on interactive elements
-    const target = e.target as HTMLElement;
-    if (target.closest('[data-no-nav]')) return;
-    router.push(`/apartments/${apt.id}`);
-  };
-
-  const handleLandingCopy = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (landingCopying) return;
-    setLandingCopying(true);
-    try {
-      const res = await fetch(`/api/apartments/${apt.id}/landing`, { method: 'POST' });
-      if (!res.ok) throw new Error('Failed');
-      const { url } = await res.json();
-      await navigator.clipboard.writeText(url);
-      setLandingJustCopied(true);
-      onLandingCopied?.();
-      setTimeout(() => setLandingJustCopied(false), 2000);
-    } catch {
-      alert('Failed to copy landing link');
-    } finally {
-      setLandingCopying(false);
-    }
-  };
-
-  const handlePreviewClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (embedUrl) onOpenPreview(embedUrl);
-  };
-
-  return (
-    <article
-      role="button"
-      tabIndex={0}
-      onClick={handleCardClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/apartments/${apt.id}`); } }}
-      className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-5 shadow-sm transition-all duration-200 hover:border-gray-300 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
-    >
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-lg font-bold text-gray-900 truncate">
-            {apt.apartmentNo}
-          </h3>
-          <p className="mt-0.5 text-sm text-gray-500 truncate">
-            {apt.building.district.name} — {apt.building.name}
-          </p>
-        </div>
-        <select
-          data-no-nav
-          value={apt.status}
-          onChange={(e) => { e.stopPropagation(); onStatusChange(apt.id, e.target.value); }}
-          className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${getStatusColor(apt.status)} cursor-pointer appearance-none bg-no-repeat pr-6`}
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2 4L6 8L10 4' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-            backgroundPosition: 'right 0.4rem center',
-          }}
-        >
-          <option value="UPCOMING">Upcoming</option>
-          <option value="AVAILABLE">Available</option>
-          <option value="RESERVED">Reserved</option>
-          <option value="SOLD">Sold</option>
-        </select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-gray-100 pt-4 text-sm">
-        <div className="flex justify-between gap-2">
-          <span className="text-gray-500">Area</span>
-          <span className="font-medium text-gray-900 tabular-nums">{apt.sqm ? `${apt.sqm} m²` : '—'}</span>
-        </div>
-        <div className="flex justify-between gap-2">
-          <span className="text-gray-500">Price</span>
-          <span className="font-semibold text-gray-900 tabular-nums">
-            {apt.total_price ? formatAmd(apt.total_price) : '—'}
-          </span>
-        </div>
-        <div className="flex justify-between gap-2">
-          <span className="text-gray-500">Paid</span>
-          <span className="font-medium text-gray-900 tabular-nums">
-            {apt.total_paid ? formatAmd(apt.total_paid) : '—'}
-          </span>
-        </div>
-        <div className="flex justify-between gap-2">
-          <span className="text-gray-500">Balance</span>
-          <span className="font-medium text-gray-900 tabular-nums">
-            {apt.balance ? formatAmd(apt.balance) : '—'}
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-4 pt-4 border-t border-gray-100 flex items-stretch gap-3" data-no-nav>
-        <Link
-          href={`/apartments/${apt.id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-        >
-          <Eye className="h-4 w-4 shrink-0" />
-          <span className="truncate">View Details</span>
-        </Link>
-        <button
-          type="button"
-          onClick={handleLandingCopy}
-          disabled={landingCopying}
-          className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-60"
-          title="Copy landing link"
-        >
-          <Link2 className="h-4 w-4 shrink-0" />
-          <span className="truncate">{landingCopying ? '…' : landingJustCopied ? 'Copied!' : 'Landing'}</span>
-        </button>
-        {embedUrl && (
-          <button
-            type="button"
-            onClick={handlePreviewClick}
-            className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
-            title="Open 3D preview"
-          >
-            <Box className="h-4 w-4 shrink-0" />
-            <span className="truncate">3D Preview</span>
-          </button>
-        )}
-      </div>
-    </article>
-  );
-});
-
-ApartmentCardItem.displayName = 'ApartmentCardItem';
-
 export default function ApartmentsList() {
   const { data: session } = useSession();
-  const [apartments, setApartments] = useState<Apartment[]>([]);
+  const [apartments, setApartments] = useState<ApartmentListRow[]>([]);
   const [buildings, setBuildings] = useState<(Building & { district: District })[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
   const [loading, setLoading] = useState(true);
@@ -655,7 +462,7 @@ export default function ApartmentsList() {
         /* Floor view: group by building, then by floor; show floor plan + apartments per floor */
         (() => {
           type GroupKey = string;
-          const byBuilding: Record<GroupKey, Apartment[]> = {};
+          const byBuilding: Record<GroupKey, ApartmentListRow[]> = {};
           apartments.forEach((apt) => {
             const key = `${apt.building.id}-${apt.building.district.name}-${apt.building.name}`;
             if (!byBuilding[key]) byBuilding[key] = [];
@@ -665,7 +472,7 @@ export default function ApartmentsList() {
           return (
             <div className="space-y-10">
               {buildingEntries.map(([key, buildingApts]) => {
-                const byFloor: Record<number | string, Apartment[]> = {};
+                const byFloor: Record<number | string, ApartmentListRow[]> = {};
                 buildingApts.forEach((apt) => {
                   const f = apt.floor ?? '—';
                   const k = typeof f === 'number' ? f : '—';
@@ -801,12 +608,7 @@ export default function ApartmentsList() {
                       <select
                         value={apt.status}
                         onChange={(e) => handleStatusChange(apt.id, e.target.value)}
-                        className={`badge border ${getStatusColor(apt.status)} cursor-pointer text-xs appearance-none bg-right bg-no-repeat pr-8 pl-3 py-1.5 font-medium transition-colors`}
-                        style={{
-                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2 4L6 8L10 4' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                          backgroundPosition: 'right 0.75rem center',
-                          paddingRight: '2rem',
-                        }}
+                        className={`select-chevron-list badge border pl-3 py-1.5 font-medium transition-colors ${getStatusColor(apt.status)} cursor-pointer appearance-none bg-right text-xs`}
                       >
                         <option value="UPCOMING">Upcoming</option>
                         <option value="AVAILABLE">Available</option>

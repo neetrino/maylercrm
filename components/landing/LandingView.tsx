@@ -338,8 +338,7 @@ export default function LandingView({ token }: { token: string }) {
                       <img
                         src={att.fileUrl}
                         alt={att.fileName || 'Floor plan'}
-                        className="h-auto w-full cursor-pointer object-contain"
-                        style={{ maxHeight: '28rem' }}
+                        className="h-auto max-h-[28rem] w-full cursor-pointer object-contain"
                       />
                     </button>
                     <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
@@ -360,10 +359,7 @@ export default function LandingView({ token }: { token: string }) {
             <section key={label} id={threeIdx === 0 ? '3d' : undefined} className={threeIdx === 0 ? 'mb-12 scroll-mt-6' : 'mb-12'}>
               <h2 className="mb-3 border-l-4 border-slate-800 pl-4 text-xl font-bold text-slate-900">{label}</h2>
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div
-                  className="relative w-full bg-slate-100"
-                  style={{ minHeight: '70vh' }}
-                >
+                <div className="relative min-h-[70vh] w-full bg-slate-100">
                   <iframe
                     src={iframeSrc}
                     title={label}
