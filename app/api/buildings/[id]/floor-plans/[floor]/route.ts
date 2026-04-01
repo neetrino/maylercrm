@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { buildingService } from '@/services/building.service';
 import { invalidateCache, cacheKeys } from '@/lib/cache';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 
 export async function DELETE(
   _request: NextRequest,
@@ -35,10 +36,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Floor plan deleted' });
   } catch (error) {
-    console.error('[API] Error deleting building floor plan:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(_request, '[API] Error deleting building floor plan', error);
   }
 }

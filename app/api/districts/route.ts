@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { districtService } from '@/services/district.service';
 import { createDistrictSchema } from '@/lib/validations';
 import { getCachedData, cacheKeys, invalidateCache } from '@/lib/cache';
+import { handleRouteError, zodErrorResponse } from '@/lib/apiErrorResponse';
 import { z } from 'zod';
 
 export async function GET(request: NextRequest) {
@@ -46,11 +47,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(districts);
     }
   } catch (error) {
-    console.error('[API] Error fetching districts:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching districts', error);
   }
 }
 
@@ -73,10 +70,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(district, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
-      );
+      return zodErrorResponse(request, error);
     }
 
     if (error instanceof Error && error.message.includes('Unique constraint')) {
@@ -86,10 +80,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error('[API] Error creating district:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error creating district', error);
   }
 }

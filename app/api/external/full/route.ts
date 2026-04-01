@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 
 export const dynamic = 'force-dynamic';
 
@@ -129,10 +130,6 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('[API] Error fetching full external data:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching full external data', error);
   }
 }

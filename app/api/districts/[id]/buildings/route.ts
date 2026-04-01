@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { buildingService } from '@/services/building.service';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 
 export async function GET(
   request: NextRequest,
@@ -61,10 +62,6 @@ export async function GET(
     // Внутренний API - возвращаем полный объект
     return NextResponse.json(buildings);
   } catch (error) {
-    console.error('[API] Error fetching buildings by district:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching buildings by district', error);
   }
 }

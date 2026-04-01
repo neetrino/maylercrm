@@ -1,130 +1,62 @@
-# 🏢 Meluvis CRM
+# Meluvis CRM
 
-Real Estate CRM система для управления комплексом недвижимости.
+CRM для управления комплексом недвижимости: районы → здания → квартиры, сделки, dashboard, внешний REST API.
 
-## 📋 Описание
+## Быстрый старт
 
-Минимальный рабочий продукт (MVP) для управления комплексом недвижимости с иерархией:
-- **District** (Район) → **Building** (Здание) → **Apartment** (Квартира)
-
-**Основные функции:**
-- Управление структурой комплекса
-- Управление статусами квартир (Upcoming, Available, Reserved, Sold)
-- Ведение карточек сделок
-- API для внешней системы (5 endpoints)
-- Dashboard с аналитикой
-
-## 🚀 Быстрый старт
-
-### Предварительные требования
-- Node.js 18+
-- PostgreSQL (или Neon account)
-- Git
-
-### Установка
+**Требования:** Node.js 18+, PostgreSQL (Neon) или совместимый URL.
 
 ```bash
-# Клонировать репозиторий
 git clone <repository-url>
-cd meluviscrm
-
-# Установить зависимости
+cd maylercrm
 npm install
-
-# Настроить переменные окружения
-cp env.example.txt .env.local
-# Отредактировать .env.local с реальными значениями
-
-# Настроить базу данных
+cp .env.example .env
+# Заполните DATABASE_URL, NEXTAUTH_SECRET, API_TOKEN и при необходимости R2
 npx prisma migrate dev
-
-# Запустить dev сервер
 npm run dev
 ```
 
-Откройте [http://localhost:3000](http://localhost:3000)
+Откройте [http://localhost:3000](http://localhost:3000).
 
-## 📚 Документация
+## Документация
 
-- **[INDEX.md](./INDEX.md)** - Навигация по документации
-- **[PLAN.md](./PLAN.md)** - План разработки
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Архитектура проекта
-- **[API-SPECIFICATION.md](./API-SPECIFICATION.md)** - Спецификация API
-- **[CODING-RULES.md](./CODING-RULES.md)** - Правила написания кода
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Инструкции по деплою
+| Назначение | Путь |
+|------------|------|
+| Индекс рабочих документов (архитектура, API, деплой) | [Documents/INDEX.md](./Documents/INDEX.md) |
+| Правила Cursor / AI | [.cursor/rules/](./.cursor/rules/) (начните с `00-core.mdc`) |
+| Техкарта и онбординг | [docs/BRIEF.md](./docs/BRIEF.md), [docs/TECH_CARD.md](./docs/TECH_CARD.md) |
+| Архитектура (канон для правил) | [docs/01-ARCHITECTURE.md](./docs/01-ARCHITECTURE.md) |
+| Указания для агентов | [AGENTS.md](./AGENTS.md) |
 
-## 🛠️ Технологии
+## Разработка с Cursor
 
-- **Next.js 14+** (App Router)
-- **TypeScript**
-- **PostgreSQL** (Neon)
-- **Prisma ORM**
-- **NextAuth.js**
-- **Tailwind CSS**
-- **Vercel** (деплой)
+1. Заполните `docs/BRIEF.md` при смене ТЗ.
+2. В чате можно запросить: прочитать `docs/BRIEF.md` и продолжить по `21-project-onboarding.mdc` (фаза 1 — размер, фаза 2 — TECH_CARD).
+3. Секреты только в `.env` / `.env.local`; в репозитории — [`.env.example`](./.env.example) без реальных ключей.
+4. Автоматизация качества: [docs/QUALITY_AUTOMATION_PLAN.md](./docs/QUALITY_AUTOMATION_PLAN.md).
 
-## 📡 API
+## Технологии
 
-Базовый URL: `https://your-domain.vercel.app/api`
+Next.js (App Router), React, TypeScript, Tailwind CSS, Prisma, PostgreSQL, NextAuth.js, Zod, Cloudflare R2 (опционально). Подробнее: [docs/02-TECH_STACK.md](./docs/02-TECH_STACK.md).
 
-**Endpoints:**
-1. `GET /api/districts` - Список районов
-2. `GET /api/districts/{slug}/buildings` - Здания по району
-3. `GET /api/buildings/{slug}/apartments` - Квартиры по зданию
-4. `GET /api/apartments/{id}` - Детали квартиры
-5. `PUT /api/apartments/{id}/status` - Обновление статуса
-
-Подробная документация: [API-SPECIFICATION.md](./API-SPECIFICATION.md)
-
-## 🏗️ Структура проекта
-
-```
-meluviscrm/
-├── src/
-│   ├── app/              # Next.js App Router
-│   ├── components/       # React компоненты
-│   ├── lib/             # Утилиты и конфигурация
-│   ├── services/        # Бизнес-логика
-│   └── types/           # TypeScript типы
-├── prisma/              # Prisma схема и миграции
-└── public/              # Статические файлы
-```
-
-## 🔐 Роли
-
-- **Admin** - полный доступ, CRUD всех сущностей
-- **Sales** - просмотр и редактирование квартир
-
-## 📝 Скрипты
+## Скрипты
 
 ```bash
-npm run dev          # Запуск dev сервера
-npm run build        # Сборка для production
-npm run start        # Запуск production сервера
-npm run lint         # Проверка кода
-npm run test         # Запуск тестов
-npx prisma studio    # Prisma Studio (GUI для БД)
+npm run dev          # Dev-сервер
+npm run build        # Production-сборка
+npm run lint         # ESLint
+npm run db:studio    # Prisma Studio
 ```
 
-## 🚢 Деплой
+## Роли
 
-Проект деплоится на Vercel. Подробные инструкции: [DEPLOYMENT.md](./DEPLOYMENT.md)
+- **Admin** — полный доступ, CRUD.
+- **Sales** — просмотр и редактирование квартир.
 
-## 📊 Прогресс
+## Лицензия
 
-Отслеживание прогресса разработки: [PROGRESS.md](./PROGRESS.md)
-
-## 🤝 Разработка
-
-Перед началом работы:
-1. Прочитать [RULES.md](./RULES.md)
-2. Изучить [CODING-RULES.md](./CODING-RULES.md)
-3. Следовать [PLAN.md](./PLAN.md)
-
-## 📄 Лицензия
-
-[Указать лицензию]
+См. [LICENSE](./LICENSE).
 
 ---
 
-**Последнее обновление:** 2026-01-19
+**Обновлено:** 2026-04-01

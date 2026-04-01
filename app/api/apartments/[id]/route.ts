@@ -3,7 +3,9 @@ import { auth } from '@/auth';
 import { apartmentService } from '@/services/apartment.service';
 import { updateApartmentSchema } from '@/lib/validations';
 import { invalidateCache, cacheKeys, cacheTags } from '@/lib/cache';
+import { handleRouteError, zodErrorResponse } from '@/lib/apiErrorResponse';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 export async function GET(
   request: NextRequest,
@@ -42,11 +44,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('[API] Error fetching apartment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching apartment', error);
   }
 }
 
@@ -75,7 +73,7 @@ export async function PUT(
     const validatedData = updateApartmentSchema.parse(body);
 
     // Преобразование данных для Prisma
-    const updateData: any = { ...validatedData };
+    const updateData: Prisma.ApartmentUpdateInput = { ...validatedData };
 
     // Преобразование даты
     if (validatedData.dealDate !== undefined) {
@@ -117,17 +115,10 @@ export async function PUT(
     return NextResponse.json(updatedApartment);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
-      );
+      return zodErrorResponse(request, error);
     }
 
-    console.error('[API] Error updating apartment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error updating apartment', error);
   }
 }
 
@@ -173,10 +164,6 @@ export async function DELETE(
     
     return NextResponse.json({ message: 'Apartment deleted' }, { status: 200 });
   } catch (error) {
-    console.error('[API] Error deleting apartment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error deleting apartment', error);
   }
 }

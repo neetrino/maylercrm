@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { attachmentService } from '@/services/attachment.service';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 
 // Удаление вложения: только отвязка от квартиры (запись в БД). Файл в R2 не удаляется.
 export async function DELETE(
@@ -38,10 +39,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[API] Error deleting attachment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error deleting attachment', error);
   }
 }

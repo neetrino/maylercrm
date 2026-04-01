@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { apartmentService } from '@/services/apartment.service';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 
 /** Generate or return landing token and full URL for the apartment. Requires auth. */
 export async function POST(
@@ -38,10 +39,6 @@ export async function POST(
 
     return NextResponse.json({ url: landingUrl, token });
   } catch (error) {
-    console.error('[API] Error ensuring landing token:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error ensuring landing token', error);
   }
 }

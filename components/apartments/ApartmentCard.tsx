@@ -4,31 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import FileUpload from './FileUpload';
+import type { Prisma, SalesType } from '@prisma/client';
+import { z } from 'zod';
 import { formatAmd } from '@/lib/formatAmd';
-
-/** Converts 3D link (Matterport, Sketchfab) to iframe embed URL for preview */
-function getEmbedPreviewUrl(url: string): string {
-  try {
-    const u = url.trim();
-    // Matterport: use /show/?m=ID (same as embed but sometimes different embed policy)
-    if (u.includes('matterport.com')) {
-      const mMatch = u.match(/[?&]m=([^&]+)/);
-      if (mMatch) return `https://my.matterport.com/show/?m=${mMatch[1]}`;
-      const spaceMatch = u.match(/\/space\/([A-Za-z0-9_-]+)/);
-      if (spaceMatch) return `https://my.matterport.com/show/?m=${spaceMatch[1]}`;
-      return u;
-    }
-    // Sketchfab: 3d-models/ID → models/ID/embed
-    if (u.includes('sketchfab.com')) {
-      const match = u.match(/3d-models\/([a-f0-9]+)/i) || u.match(/models\/([a-f0-9]+)/i);
-      if (match) return `https://sketchfab.com/models/${match[1]}/embed`;
-      return u;
-    }
-    return u;
-  } catch {
-    return url;
-  }
-}
+import { getEmbedPreviewUrl } from '@/lib/getEmbedPreviewUrl';
 
 function truncateUrl(url: string, maxLen = 50): string {
   if (url.length <= maxLen) return url;
@@ -172,17 +151,15 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
 
   const handleSave = async () => {
     try {
-      const apiData: any = {};
-      
-      // Вспомогательная функция для преобразования числа
-      const parseNumber = (value: any): number | null => {
+      const apiData: Prisma.ApartmentUpdateInput = {};
+
+      const parseNumber = (value: unknown): number | null => {
         if (value === null || value === undefined || value === '') return null;
-        const num = typeof value === 'string' ? parseFloat(value) : value;
-        return isNaN(num) ? null : num;
+        const num = typeof value === 'string' ? parseFloat(value) : Number(value);
+        return Number.isNaN(num) ? null : num;
       };
-      
-      // Вспомогательная функция для преобразования строки
-      const parseString = (value: any): string | null => {
+
+      const parseString = (value: unknown): string | null => {
         if (value === null || value === undefined) return null;
         const str = String(value).trim();
         return str === '' ? null : str;
@@ -260,7 +237,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
         apiData.passportTaxNo = parseString(formData.passportTaxNo);
       }
       if (formData.salesType !== undefined) {
-        apiData.salesType = formData.salesType;
+        apiData.salesType = formData.salesType as SalesType;
       }
       if (formData.dealDescription !== undefined) {
         apiData.dealDescription = parseString(formData.dealDescription);
@@ -300,9 +277,9 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
       if (!response.ok) {
         const errorData = await response.json();
         if (errorData.details && Array.isArray(errorData.details)) {
-          const errorMessages = errorData.details.map((err: any) =>
-            `${err.path.join('.')}: ${err.message}`
-          ).join(', ');
+          const errorMessages = (errorData.details as z.ZodIssue[])
+            .map((err) => `${err.path.join('.')}: ${err.message}`)
+            .join(', ');
           throw new Error(`Validation error: ${errorMessages}`);
         }
         throw new Error(errorData.error || 'Failed to save');
@@ -503,17 +480,7 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
             <select
               value={apartment.status}
               onChange={(e) => handleStatusChange(e.target.value)}
-              className={`badge border-2 ${getStatusColor(apartment.status)} cursor-pointer text-lg font-bold appearance-none bg-right bg-no-repeat transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3.5 5L7 8.5L10.5 5' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                backgroundPosition: 'right 0.875rem center',
-                paddingTop: '0.625rem',
-                paddingBottom: '0.625rem',
-                paddingLeft: '0.875rem',
-                paddingRight: '2rem',
-                minWidth: '130px',
-                borderRadius: '0.5rem',
-              }}
+              className={`select-chevron-card badge border-2 ${getStatusColor(apartment.status)} cursor-pointer text-lg font-bold appearance-none bg-right transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
             >
               <option value="UPCOMING">Upcoming</option>
               <option value="AVAILABLE">Available</option>
