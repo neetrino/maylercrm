@@ -1,60 +1,39 @@
-# 📚 Документация проекта Meluvis CRM
+# Документация проекта Meluvis CRM
 
-Навигация по всей документации проекта.
+Навигация по материалам репозитория. Канон по правилам Cursor: папка **[docs/](../docs/)** (BRIEF, TECH_CARD, архитектура).
 
-## 🎯 Основные документы
+## Основные документы
 
-- **[README.md](./README.md)** - Главный файл проекта, быстрый старт
-- **[PLAN.md](./PLAN.md)** - План разработки с этапами и задачами
-- **[PROGRESS.md](./PROGRESS.md)** - Отслеживание прогресса разработки
+- **[README.md](../README.md)** — корень проекта, быстрый старт
+- **[docs/BRIEF.md](../docs/BRIEF.md)** — техзадание (шаблон правил)
+- **[docs/TECH_CARD.md](../docs/TECH_CARD.md)** — технологическая карта
+- **[PLAN (legacy)](./OLD/plan.md)** — старый план
+- **[PROGRESS](./Done%20Tasks/PROGRESS.md)** — хронология разработки
 
-## 🏗️ Архитектура и структура
+## Архитектура и API
 
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Архитектура проекта, структура папок, технологии
-- **[API-SPECIFICATION.md](./API-SPECIFICATION.md)** - Полная спецификация API (5 endpoints)
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** — архитектура (часть путей может отличаться от текущего `app/` в корне)
+- **[docs/01-ARCHITECTURE.md](../docs/01-ARCHITECTURE.md)** — актуальная ссылка на структуру для правил AI
+- **[API-SPECIFICATION.md](./OLD/API-SPECIFICATION.md)** — спецификация внешнего API
 
-## 📋 Правила и стандарты
+## Правила и стандарты
 
-- **[RULES.md](./RULES.md)** - Общие правила проекта
-- **[CODING-RULES.md](./CODING-RULES.md)** - Правила написания кода, стиль, стандарты
+- **[RULES.md](./Done%20Tasks/RULES.md)**
+- **[CODING-RULES.md](./Done%20Tasks/CODING-RULES.md)**
+- **[.cursor/rules/](../.cursor/rules/)** — правила Cursor для этого репозитория
 
-## 🚀 Деплой и окружения
+## Деплой и окружения
 
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Инструкции по деплою на Vercel
-- **[ENVIRONMENT.md](./ENVIRONMENT.md)** - Описание окружений (dev, staging, prod)
-- **[env.example.txt](./env.example.txt)** - Пример файла с переменными окружения
+- **[DEPLOYMENT.md](./Done%20Tasks/DEPLOYMENT.md)**
+- **[ENVIRONMENT.md](./Done%20Tasks/ENVIRONMENT.md)**
+- **[.env.example](../.env.example)** — шаблон переменных окружения
 
-## 📥 Импорт данных
+## Импорт и прочее
 
-- **[IMPORT.md](./Done%20Tasks/IMPORT.md)** - Документация по импорту: Excel, R2, Matter Link, скрипты
-
-## 📐 Планы и будущие функции
-
-- **[PLAN-INTERACTIVE-FLOOR-PLAN.md](./PLAN-INTERACTIVE-FLOOR-PLAN.md)** - План реализации интерактивного плана этажа (зоны квартир, рисование в системе, hover/click)
-
-## 📄 Исходные документы
-
-- **[TZ.md](./TZ.md)** - Техническое задание
-- **[db.md](./db.md)** - Информация о базе данных
+- **[IMPORT.md](./Done%20Tasks/IMPORT.md)**
+- **[PLAN-INTERACTIVE-FLOOR-PLAN.md](./PLAN-INTERACTIVE-FLOOR-PLAN.md)**
+- **[Dev TZ.md](./Done%20Tasks/Dev%20TZ.md)** — исходное ТЗ (если применимо)
 
 ---
 
-## 🔍 Быстрый поиск
-
-### Для разработчиков
-1. Начните с [README.md](./README.md)
-2. Изучите [ARCHITECTURE.md](./ARCHITECTURE.md)
-3. Прочитайте [CODING-RULES.md](./CODING-RULES.md)
-4. Следуйте [PLAN.md](./PLAN.md)
-
-### Для интеграторов (API)
-1. Откройте [API-SPECIFICATION.md](./API-SPECIFICATION.md)
-2. Получите тестовые данные в [ENVIRONMENT.md](./ENVIRONMENT.md)
-
-### Для менеджеров
-1. Проверьте [PLAN.md](./PLAN.md) - этапы и задачи
-2. Отслеживайте [PROGRESS.md](./PROGRESS.md) - текущий прогресс
-
----
-
-**Последнее обновление:** 2026-01-19
+**Обновлено:** 2026-04-01
