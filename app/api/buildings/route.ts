@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { buildingService } from '@/services/building.service';
 import { createBuildingSchema } from '@/lib/validations';
 import { cacheKeys, invalidateCache } from '@/lib/cache';
+import { handleRouteError, zodErrorResponse } from '@/lib/apiErrorResponse';
 import { z } from 'zod';
 
 export async function GET(request: NextRequest) {
@@ -20,13 +21,7 @@ export async function GET(request: NextRequest) {
     const buildings = await buildingService.getAll(parsedDistrictId);
     return NextResponse.json(buildings);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    const stack = error instanceof Error ? error.stack : undefined;
-    console.error('[API] Error fetching buildings:', message, stack);
-    return NextResponse.json(
-      { error: 'Internal server error', detail: message },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching buildings', error);
   }
 }
 
@@ -53,10 +48,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(building, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
-      );
+      return zodErrorResponse(request, error);
     }
 
     if (error instanceof Error) {
@@ -71,10 +63,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.error('[API] Error creating building:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error creating building', error);
   }
 }

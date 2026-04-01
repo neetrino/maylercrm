@@ -4,6 +4,8 @@
 
 **Իրականացում.** `app/api/` — REST endpoints (ներքին և արտաքին, Bearer `API_TOKEN` որտեղ կիրառվում է)։
 
+**Անվտանգություն և մուտքի մոդել.** [docs/SECURITY.md](./SECURITY.md) — session, Bearer, landing token, RBAC մատրիցա, rate limit։
+
 Նոր endpoint-ներ ավելացնելիս — թարմացրու՛ սպեցիֆիկացիան կամ ավելացրու՛ բաժին `Documents/`-ում և հղում այստեղ։
 
 ---

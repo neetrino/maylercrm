@@ -3,6 +3,8 @@ import { auth } from '@/auth';
 import { apartmentService } from '@/services/apartment.service';
 import { updateApartmentStatusSchema } from '@/lib/validations';
 import { invalidateCache, cacheKeys, cacheTags } from '@/lib/cache';
+import { handleRouteError, jsonError } from '@/lib/apiErrorResponse';
+import { getOrCreateRequestId } from '@/lib/requestId';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 
@@ -191,22 +193,23 @@ export async function PUT(
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      if (process.env.NODE_ENV === 'production') {
+        return jsonError(request, 400, { error: 'Validation error' });
+      }
       const flat = error.flatten();
+      const requestId = getOrCreateRequestId(request);
       return NextResponse.json(
         {
           error: 'Validation failed',
           details: flat.fieldErrors,
           message:
             'Send status in JSON body or as query param. Status: upcoming | available | reserved | sold (case insensitive). Example: PUT with body {"status":"available"} or ?status=available',
+          requestId,
         },
-        { status: 400 }
+        { status: 400, headers: { 'x-request-id': requestId } }
       );
     }
 
-    console.error('[API] Error updating apartment status:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error updating apartment status', error);
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apartmentService } from '@/services/apartment.service';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 
 export async function GET(
   request: NextRequest,
@@ -86,10 +87,6 @@ export async function GET(
       updated_at: apartment.updatedAt.toISOString(),
     });
   } catch (error) {
-    console.error('[API] Error fetching apartment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching apartment (external)', error);
   }
 }

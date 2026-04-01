@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { districtService } from '@/services/district.service';
 import { updateDistrictSchema } from '@/lib/validations';
 import { invalidateCache, cacheKeys } from '@/lib/cache';
+import { handleRouteError, zodErrorResponse } from '@/lib/apiErrorResponse';
 import { z } from 'zod';
 
 export async function GET(
@@ -37,11 +38,7 @@ export async function GET(
 
     return NextResponse.json(district);
   } catch (error) {
-    console.error('[API] Error fetching district:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching district', error);
   }
 }
 
@@ -77,10 +74,7 @@ export async function PUT(
     return NextResponse.json(district);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
-      );
+      return zodErrorResponse(request, error);
     }
 
     if (error instanceof Error && error.message.includes('Unique constraint')) {
@@ -90,11 +84,7 @@ export async function PUT(
       );
     }
 
-    console.error('[API] Error updating district:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error updating district', error);
   }
 }
 
@@ -132,10 +122,6 @@ export async function DELETE(
       }
     }
 
-    console.error('[API] Error deleting district:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error deleting district', error);
   }
 }

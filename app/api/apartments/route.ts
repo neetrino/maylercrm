@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { apartmentService } from '@/services/apartment.service';
 import { createApartmentSchema } from '@/lib/validations';
 import { getCachedData, invalidateCache, cacheKeys, cacheTags } from '@/lib/cache';
+import { handleRouteError, zodErrorResponse } from '@/lib/apiErrorResponse';
 import { z } from 'zod';
 
 const CACHE_REVALIDATE_SEC = 30;
@@ -55,11 +56,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('[API] Error fetching apartments:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching apartments', error);
   }
 }
 
@@ -90,10 +87,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(apartment, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
-      );
+      return zodErrorResponse(request, error);
     }
 
     if (error instanceof Error) {
@@ -105,10 +99,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.error('[API] Error creating apartment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error creating apartment', error);
   }
 }

@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { buildingService } from '@/services/building.service';
 import { updateBuildingSchema } from '@/lib/validations';
 import { invalidateCache, cacheKeys } from '@/lib/cache';
+import { handleRouteError, zodErrorResponse } from '@/lib/apiErrorResponse';
 import { z } from 'zod';
 
 export async function GET(
@@ -37,11 +38,7 @@ export async function GET(
 
     return NextResponse.json(building);
   } catch (error) {
-    console.error('[API] Error fetching building:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching building', error);
   }
 }
 
@@ -81,10 +78,7 @@ export async function PUT(
     return NextResponse.json(building);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
-      );
+      return zodErrorResponse(request, error);
     }
 
     if (error instanceof Error) {
@@ -99,11 +93,7 @@ export async function PUT(
       }
     }
 
-    console.error('[API] Error updating building:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error updating building', error);
   }
 }
 
@@ -150,10 +140,6 @@ export async function DELETE(
       }
     }
 
-    console.error('[API] Error deleting building:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error deleting building', error);
   }
 }

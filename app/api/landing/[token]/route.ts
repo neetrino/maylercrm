@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apartmentService } from '@/services/apartment.service';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 
 /** Public API: get apartment by landing token. No auth — only link holders can access. */
 export async function GET(
@@ -24,10 +25,6 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('[API] Error fetching landing apartment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(_request, '[API] Error fetching landing apartment', error);
   }
 }

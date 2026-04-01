@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buildingService } from '@/services/building.service';
 import { apartmentService } from '@/services/apartment.service';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 
 export async function GET(
   request: NextRequest,
@@ -110,10 +111,6 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('[API] Error fetching apartments by building ID:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching apartments by building ID', error);
   }
 }

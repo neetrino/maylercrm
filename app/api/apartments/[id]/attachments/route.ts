@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { attachmentService } from '@/services/attachment.service';
 import { FileType } from '@prisma/client';
 import { putObject } from '@/lib/r2';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 import crypto from 'crypto';
 
 // Максимальный размер файла: 10MB
@@ -126,11 +127,7 @@ export async function POST(
       createdAt: attachment.createdAt.toISOString(),
     });
   } catch (error) {
-    console.error('[API] Error uploading attachment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error uploading attachment', error);
   }
 }
 
@@ -159,10 +156,6 @@ export async function GET(
 
     return NextResponse.json(attachments);
   } catch (error) {
-    console.error('[API] Error fetching attachments:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching attachments', error);
   }
 }

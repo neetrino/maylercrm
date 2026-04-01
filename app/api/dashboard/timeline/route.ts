@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { dashboardService } from '@/services/dashboard.service';
 import { getCachedData, cacheKeys } from '@/lib/cache';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
@@ -23,10 +24,6 @@ export async function GET() {
 
     return NextResponse.json(timeline);
   } catch (error) {
-    console.error('[API] Error fetching sales timeline:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching sales timeline', error);
   }
 }

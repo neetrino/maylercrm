@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { buildingService } from '@/services/building.service';
 import { putObject } from '@/lib/r2';
 import { invalidateCache, cacheKeys } from '@/lib/cache';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
@@ -71,11 +72,7 @@ export async function POST(
       fileName: file.name,
     });
   } catch (error) {
-    console.error('[API] Error uploading building floor plan:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error uploading building floor plan', error);
   }
 }
 
@@ -102,10 +99,6 @@ export async function GET(
 
     return NextResponse.json(building.floorPlans || []);
   } catch (error) {
-    console.error('[API] Error fetching building floor plans:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching building floor plans', error);
   }
 }

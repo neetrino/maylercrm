@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { districtService } from '@/services/district.service';
 import { buildingService } from '@/services/building.service';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 
 export async function GET(
   request: NextRequest,
@@ -45,10 +46,6 @@ export async function GET(
 
     return NextResponse.json({ data: buildingsWithSlug });
   } catch (error) {
-    console.error('[API] Error fetching buildings by district slug:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] Error fetching buildings by district slug', error);
   }
 }

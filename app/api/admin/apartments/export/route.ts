@@ -1,11 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { handleRouteError } from '@/lib/apiErrorResponse';
 import { prisma } from '@/lib/prisma';
 import { buildApartmentsExportXlsxBuffer } from '@/lib/apartmentsFullExport';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session || session.user.role !== 'ADMIN') {
@@ -35,10 +36,6 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('[API] admin apartments export:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(request, '[API] admin apartments export', error);
   }
 }
