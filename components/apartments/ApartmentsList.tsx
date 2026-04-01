@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Eye, Link2, Box } from 'lucide-react';
+import { Eye, Link2, Box, FileSpreadsheet } from 'lucide-react';
 import type { Building, District } from '@prisma/client';
 import ApartmentForm from './ApartmentForm';
 import { formatAmd } from '@/lib/formatAmd';
@@ -230,7 +230,38 @@ export default function ApartmentsList() {
     total_pages: 0,
   });
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
+  const [exportLoading, setExportLoading] = useState(false);
   const isAdmin = session?.user?.role === 'ADMIN';
+
+  const handleExportExcel = async () => {
+    setExportLoading(true);
+    try {
+      const response = await fetch('/api/admin/apartments/export');
+      if (!response.ok) {
+        if (response.status === 403) {
+          alert('Access denied');
+        } else {
+          alert('Export failed');
+        }
+        return;
+      }
+      const blob = await response.blob();
+      const cd = response.headers.get('Content-Disposition');
+      let filename = 'apartments-export.xlsx';
+      const match = cd?.match(/filename="([^"]+)"/);
+      if (match) filename = match[1];
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Export failed');
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   const fetchDistricts = async () => {
     try {
@@ -501,12 +532,25 @@ export default function ApartmentsList() {
               </button>
             </div>
             {isAdmin && (
-              <button
-                onClick={() => setShowForm(true)}
-                className="btn-primary"
-              >
-                + Create Apartment
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleExportExcel()}
+                  disabled={exportLoading}
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  title="Download all apartments as Excel"
+                >
+                  <FileSpreadsheet className="h-4 w-4 shrink-0" />
+                  {exportLoading ? 'Exporting…' : 'Export Excel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(true)}
+                  className="btn-primary"
+                >
+                  + Create Apartment
+                </button>
+              </div>
             )}
           </div>
         </div>
