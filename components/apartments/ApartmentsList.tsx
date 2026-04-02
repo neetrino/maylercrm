@@ -4,7 +4,16 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { FileSpreadsheet, Download, Save, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  FileSpreadsheet,
+  Save,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Layers,
+  SquarePen,
+  X,
+} from 'lucide-react';
 import type { Building, District } from '@prisma/client';
 import ApartmentForm from './ApartmentForm';
 import { ApartmentCardItem } from './ApartmentCardItem';
@@ -48,8 +57,20 @@ export default function ApartmentsList() {
   const [editedFields, setEditedFields] = useState<EditedFields>({});
   const [bulkSaving, setBulkSaving] = useState(false);
   const [bulkSaveResult, setBulkSaveResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [listBulkEditMode, setListBulkEditMode] = useState(false);
 
   const hasEdits = useMemo(() => Object.keys(editedFields).length > 0, [editedFields]);
+
+  const exitListBulkEdit = useCallback(() => {
+    if (hasEdits) {
+      const ok = window.confirm(
+        'Discard unsaved changes to apartment number and name fields?'
+      );
+      if (!ok) return;
+    }
+    setEditedFields({});
+    setListBulkEditMode(false);
+  }, [hasEdits]);
 
   const handleFieldEdit = useCallback((id: number, field: 'apartmentNo' | 'apartmentName', value: string) => {
     const apt = apartments.find((a) => a.id === id);
@@ -114,6 +135,7 @@ export default function ApartmentsList() {
         })
       );
       setEditedFields({});
+      setListBulkEditMode(false);
       setBulkSaveResult({ type: 'success', message: `${result.updated} apartments updated` });
       setTimeout(() => setBulkSaveResult(null), 3000);
     } catch (err) {
@@ -160,6 +182,7 @@ export default function ApartmentsList() {
       });
       setAllLoaded(true);
       setEditedFields({});
+      setListBulkEditMode(false);
     } catch (err) {
       setError('Failed to load all apartments');
       console.error(err);
@@ -227,6 +250,7 @@ export default function ApartmentsList() {
       setLoading(true);
       setAllLoaded(false);
       setEditedFields({});
+      setListBulkEditMode(false);
       let url = `/api/apartments?page=${page}&limit=21&sortBy=${sortBy}&sortOrder=${sortOrder}`;
       if (selectedBuilding) {
         url += `&buildingId=${selectedBuilding}`;
@@ -570,30 +594,66 @@ export default function ApartmentsList() {
             type="button"
             onClick={() => void handleLoadAll()}
             disabled={loadingAll}
-            className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+            title={
+              loadingAll
+                ? 'Loading all apartments…'
+                : allLoaded
+                  ? `All ${apartments.length} apartments loaded`
+                  : `Show all ${pagination.total} apartments (load full list)`
+            }
+            aria-label={
+              loadingAll
+                ? 'Loading all apartments'
+                : allLoaded
+                  ? `All ${apartments.length} apartments loaded`
+                  : `Load all ${pagination.total} apartments`
+            }
           >
             {loadingAll ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+            ) : allLoaded ? (
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden />
             ) : (
-              <Download className="h-4 w-4" />
+              <Layers className="h-5 w-5" aria-hidden />
             )}
-            {loadingAll ? 'Loading all…' : allLoaded ? `All loaded (${apartments.length})` : `Load all (${pagination.total})`}
           </button>
 
-          {hasEdits && (
+          {!listBulkEditMode ? (
             <button
               type="button"
-              onClick={() => void handleBulkSave()}
-              disabled={bulkSaving}
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => setListBulkEditMode(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50"
             >
-              {bulkSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {bulkSaving ? 'Saving…' : `Save changes (${Object.keys(editedFields).length})`}
+              <SquarePen className="h-4 w-4 shrink-0" />
+              Bulk edit
             </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={exitListBulkEdit}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50"
+              >
+                <X className="h-4 w-4 shrink-0" />
+                Exit edit
+              </button>
+              {hasEdits && (
+                <button
+                  type="button"
+                  onClick={() => void handleBulkSave()}
+                  disabled={bulkSaving}
+                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {bulkSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  {bulkSaving ? 'Saving…' : `Save changes (${Object.keys(editedFields).length})`}
+                </button>
+              )}
+            </>
           )}
 
           {bulkSaveResult && (
@@ -811,27 +871,40 @@ export default function ApartmentsList() {
                   const nameEdited = edits?.apartmentName !== undefined;
 
                   return (
-                    <tr key={apt.id} className={`hover:bg-gray-50 ${noEdited || nameEdited ? 'bg-amber-50/50' : ''}`}>
+                    <tr
+                      key={apt.id}
+                      className={`hover:bg-gray-50 ${listBulkEditMode && (noEdited || nameEdited) ? 'bg-amber-50/50' : ''}`}
+                    >
                       <td className="whitespace-nowrap px-3 py-2">
-                        <input
-                          type="text"
-                          defaultValue={apt.apartmentNo}
-                          onChange={(e) => handleFieldEdit(apt.id, 'apartmentNo', e.target.value)}
-                          className={`w-24 rounded-md border px-2 py-1.5 text-sm font-medium text-gray-900 transition-colors focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 ${
-                            noEdited ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-transparent'
-                          }`}
-                        />
+                        {listBulkEditMode ? (
+                          <input
+                            type="text"
+                            key={`${apt.id}-no-${apt.apartmentNo}`}
+                            defaultValue={apt.apartmentNo}
+                            onChange={(e) => handleFieldEdit(apt.id, 'apartmentNo', e.target.value)}
+                            className={`w-24 rounded-md border px-2 py-1.5 text-sm font-medium text-gray-900 transition-colors focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 ${
+                              noEdited ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-transparent'
+                            }`}
+                          />
+                        ) : (
+                          <span className="text-sm font-medium text-gray-900">{apt.apartmentNo}</span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2">
-                        <input
-                          type="text"
-                          defaultValue={apt.apartmentName ?? ''}
-                          placeholder="—"
-                          onChange={(e) => handleFieldEdit(apt.id, 'apartmentName', e.target.value)}
-                          className={`w-40 rounded-md border px-2 py-1.5 text-sm text-gray-900 transition-colors focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 ${
-                            nameEdited ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-transparent'
-                          }`}
-                        />
+                        {listBulkEditMode ? (
+                          <input
+                            type="text"
+                            key={`${apt.id}-name-${apt.apartmentName ?? ''}`}
+                            defaultValue={apt.apartmentName ?? ''}
+                            placeholder="—"
+                            onChange={(e) => handleFieldEdit(apt.id, 'apartmentName', e.target.value)}
+                            className={`w-40 rounded-md border px-2 py-1.5 text-sm text-gray-900 transition-colors focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 ${
+                              nameEdited ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-transparent'
+                            }`}
+                          />
+                        ) : (
+                          <span className="text-sm text-gray-900">{apt.apartmentName?.trim() || '—'}</span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                         {apt.building.district.name} - {apt.building.name}
