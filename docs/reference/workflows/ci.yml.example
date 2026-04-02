@@ -19,7 +19,7 @@ jobs:
           test -f .cursor/rules/00-core.mdc || (echo "Missing .cursor/rules/00-core.mdc" && exit 1)
           test -f docs/BRIEF.md || (echo "Missing docs/BRIEF.md" && exit 1)
           test -d .cursor/rules || (echo "Missing .cursor/rules/" && exit 1)
-          test -d reference/templates || (echo "Missing reference/templates/" && exit 1)
+          test -d docs/reference/templates || (echo "Missing docs/reference/templates/" && exit 1)
           echo "Structure OK"
 
       - name: Check docs when present (TECH_CARD/ARCHITECTURE/PROGRESS created at onboarding)

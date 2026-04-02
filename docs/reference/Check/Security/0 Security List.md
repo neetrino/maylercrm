@@ -7,7 +7,7 @@
 
 ---
 
-## 1. Edge / Network — [[1 Edge-Network защита (периметр)]]
+## 1. Edge / Network — [[1 Edge-Network protection (perimeter)]]
 *Сначала 🤖, в конце 👤*
 
 * [ ] 🤖 **1.5** Security headers: X-Content-Type-Options, X-Frame-Options, CSP baseline (Code/Vercel)
@@ -18,7 +18,7 @@
 
 ---
 
-## 2. Auth + Sessions — [[2 Auth + Sessions (самая любимая точка атаки)]]
+## 2. Auth + Sessions — [[2 Auth + Sessions (primary attack surface)]]
 *Сначала 🤖, в конце 👤*
 
 * [ ] 🤖 **2.2** Secure cookies + session TTL/rotation (Clerk/Auth.js)
@@ -31,7 +31,7 @@
 
 ---
 
-## 3. API безопасность — [[3 API безопасность (Next API - Nest)]]
+## 3. API security — [[3 API security (Next API - Nest)]]
 *Всё в коде 🤖*
 
 * [ ] 🤖 **3.1** Input validation (Code)
@@ -64,7 +64,7 @@
 
 ---
 
-## 6. Observability — [[6 Observability (иначе ты слепой)]]
+## 6. Observability — [[6 Observability (otherwise blind)]]
 *Сначала 🤖, в конце 👤*
 
 * [ ] 🤖 **6.1** Logs + request-id (Code/Vercel)
@@ -73,7 +73,7 @@
 
 ---
 
-## 7. Redis (Upstash) — [[7 Upstash Redis (если используется)]]
+## 7. Redis (Upstash) — [[7 Upstash Redis (if used)]]
 *Сначала 🤖, в конце 👤*
 
 * [ ] 🤖 **7.2** Redis TTL + namespaces (Code)
@@ -88,4 +88,4 @@
 * [ ] 🤖👤 **8.1** Dependency scanning in CI (npm audit / Dependabot/Renovate)
 
 ---
-> **Уровень 2:** расширенный контроль — раздел B (Безопасность) и C (Секреты) в «Проектный Quality Checklist».
+> **Уровень 2:** расширенный контроль — раздел B (Безопасность) и C (Секреты) в [[Project Quality Checklist]].

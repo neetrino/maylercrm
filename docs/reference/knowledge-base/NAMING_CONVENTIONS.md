@@ -1,6 +1,6 @@
 # Naming Conventions
 
-> Այս ֆայլը — համառոտ օգնական։ Ամբողջական կանոնները — `.cursor/rules/02-coding-standards.mdc`-ում։
+> Այս ֆայլը — համառոտ օգնական։ Կոդի սահմաններ և TypeScript — `.cursor/rules/00-core.mdc` և `03-typescript.mdc`։
 
 ---
 
@@ -34,6 +34,6 @@
 
 ---
 
-> Ամբողջական կանոններ, օրինակներ և հակապաթեռններ. `.cursor/rules/02-coding-standards.mdc`
+> Ամբողջական կանոններ. `.cursor/rules/00-core.mdc`, `03-typescript.mdc`
 
 **Վերջին թարմացում.** 2026-02-12
