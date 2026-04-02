@@ -21,6 +21,7 @@ export default function ApartmentForm({
   const [formData, setFormData] = useState({
     buildingId: buildings[0]?.id || 0,
     apartmentNo: '',
+    apartmentName: '',
     apartmentType: '',
     floor: '',
     sqm: '',
@@ -42,6 +43,7 @@ export default function ApartmentForm({
         body: JSON.stringify({
           buildingId: formData.buildingId,
           apartmentNo: formData.apartmentNo,
+          apartmentName: formData.apartmentName.trim() || null,
           apartmentType: formData.apartmentType
             ? parseInt(formData.apartmentType)
             : undefined,
@@ -111,6 +113,25 @@ export default function ApartmentForm({
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
               placeholder="12-05"
             />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Apt name
+            </label>
+            <input
+              type="text"
+              value={formData.apartmentName}
+              onChange={(e) =>
+                setFormData({ ...formData, apartmentName: e.target.value })
+              }
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              placeholder="Optional display name"
+              maxLength={255}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Optional label for marketing/UI; distinct from apartment number.
+            </p>
           </div>
 
           <div className="mb-4">

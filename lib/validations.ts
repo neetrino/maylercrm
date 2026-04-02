@@ -129,4 +129,5 @@ export const updateApartmentStatusSchema = z.object({
   other_buyers: z.string().max(1000).optional().nullable().or(z.literal('').transform(() => null)),
   payment_schedule: z.string().max(2000).optional().nullable().or(z.literal('').transform(() => null)),
   deal_description: z.string().max(2000).optional().nullable().or(z.literal('').transform(() => null)),
+  apartment_name: z.string().max(255).optional().nullable().or(z.literal('').transform(() => null)),
 });

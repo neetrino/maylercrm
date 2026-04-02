@@ -56,6 +56,7 @@ export async function PUT(
       'other_buyers',
       'payment_schedule',
       'deal_description',
+      'apartment_name',
     ] as const;
 
     let jsonBody: Record<string, unknown> = {};
@@ -143,6 +144,9 @@ export async function PUT(
     if (validatedData.deal_description !== undefined) {
       updateData.dealDescription = validatedData.deal_description;
     }
+    if (validatedData.apartment_name !== undefined) {
+      updateData.apartmentName = validatedData.apartment_name?.trim() || null;
+    }
 
     try {
       await apartmentService.update(id, updateData);
@@ -177,6 +181,7 @@ export async function PUT(
     return NextResponse.json({
       id: apartment.id,
       status: apartment.status.toLowerCase(),
+      apartment_name: apartment.apartmentName,
       deal_date: apartment.dealDate ? apartment.dealDate.toISOString().split('T')[0] : null,
       ownership_name: apartment.ownershipName,
       email: apartment.email,

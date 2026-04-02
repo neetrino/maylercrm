@@ -43,6 +43,7 @@ export async function GET(
     return NextResponse.json({
       id: apartment.id,
       apartment_no: apartment.apartmentNo,
+      apartment_name: apartment.apartmentName,
       apartment_type: apartment.apartmentType,
       floor: apartment.floor,
       status: apartment.status.toLowerCase(),
