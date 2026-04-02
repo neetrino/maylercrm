@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { FileSpreadsheet } from 'lucide-react';
+import { FileSpreadsheet, Download, Save, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { Building, District } from '@prisma/client';
 import ApartmentForm from './ApartmentForm';
 import { ApartmentCardItem } from './ApartmentCardItem';
@@ -12,6 +12,9 @@ import type { ApartmentListRow } from './apartmentListTypes';
 import { formatAmd } from '@/lib/formatAmd';
 
 const APARTMENTS_VIEW_MODE_KEY = 'maylercrm:apartmentsViewMode';
+
+type ApartmentEdit = { apartmentNo?: string; apartmentName?: string | null };
+type EditedFields = Record<number, ApartmentEdit>;
 
 export default function ApartmentsList() {
   const { data: session } = useSession();
@@ -23,7 +26,7 @@ export default function ApartmentsList() {
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchInput, setSearchInput] = useState(''); // для отображения в инпуте (с debounce)
+  const [searchInput, setSearchInput] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'floor'>('grid');
@@ -39,6 +42,131 @@ export default function ApartmentsList() {
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
   const isAdmin = session?.user?.role === 'ADMIN';
+
+  const [loadingAll, setLoadingAll] = useState(false);
+  const [allLoaded, setAllLoaded] = useState(false);
+  const [editedFields, setEditedFields] = useState<EditedFields>({});
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkSaveResult, setBulkSaveResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const hasEdits = useMemo(() => Object.keys(editedFields).length > 0, [editedFields]);
+
+  const handleFieldEdit = useCallback((id: number, field: 'apartmentNo' | 'apartmentName', value: string) => {
+    const apt = apartments.find((a) => a.id === id);
+    if (!apt) return;
+
+    const original = field === 'apartmentNo' ? apt.apartmentNo : (apt.apartmentName ?? '');
+    const normalizedValue = value;
+    const normalizedOriginal = original;
+
+    setEditedFields((prev) => {
+      const current = { ...prev };
+      if (!current[id]) {
+        current[id] = {};
+      }
+      if (normalizedValue === normalizedOriginal) {
+        delete current[id][field];
+        if (Object.keys(current[id]).length === 0) {
+          delete current[id];
+        }
+      } else if (field === 'apartmentName') {
+        current[id].apartmentName = value === '' ? null : value;
+      } else {
+        current[id].apartmentNo = value;
+      }
+      return current;
+    });
+  }, [apartments]);
+
+  const handleBulkSave = useCallback(async () => {
+    if (!hasEdits) return;
+    setBulkSaving(true);
+    setBulkSaveResult(null);
+
+    const items = Object.entries(editedFields).map(([idStr, fields]) => ({
+      id: Number(idStr),
+      ...fields,
+    }));
+
+    try {
+      const response = await fetch('/api/apartments/bulk', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Save failed' }));
+        throw new Error(err.error || 'Save failed');
+      }
+
+      const result = await response.json();
+
+      setApartments((prev) =>
+        prev.map((apt) => {
+          const edits = editedFields[apt.id];
+          if (!edits) return apt;
+          return {
+            ...apt,
+            apartmentNo: edits.apartmentNo ?? apt.apartmentNo,
+            apartmentName: edits.apartmentName !== undefined ? edits.apartmentName ?? null : apt.apartmentName,
+          };
+        })
+      );
+      setEditedFields({});
+      setBulkSaveResult({ type: 'success', message: `${result.updated} apartments updated` });
+      setTimeout(() => setBulkSaveResult(null), 3000);
+    } catch (err) {
+      setBulkSaveResult({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Save failed',
+      });
+    } finally {
+      setBulkSaving(false);
+    }
+  }, [editedFields, hasEdits]);
+
+  const handleLoadAll = useCallback(async () => {
+    setLoadingAll(true);
+    setAllLoaded(false);
+
+    try {
+      let allApartments: ApartmentListRow[] = [];
+      let page = 1;
+      let totalPages = 1;
+      const limit = 100;
+
+      while (page <= totalPages) {
+        let url = `/api/apartments?page=${page}&limit=${limit}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+        if (selectedBuilding) url += `&buildingId=${selectedBuilding}`;
+        if (selectedStatus) url += `&status=${selectedStatus}`;
+        if (searchQuery.trim()) url += `&search=${encodeURIComponent(searchQuery.trim())}`;
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to load');
+        const data = await response.json();
+
+        allApartments = [...allApartments, ...(data.items || [])];
+        totalPages = data.pagination?.total_pages || 1;
+        page++;
+      }
+
+      setApartments(allApartments);
+      setPagination({
+        page: 1,
+        limit: allApartments.length,
+        total: allApartments.length,
+        total_pages: 1,
+      });
+      setAllLoaded(true);
+      setEditedFields({});
+    } catch (err) {
+      setError('Failed to load all apartments');
+      console.error(err);
+    } finally {
+      setLoadingAll(false);
+    }
+  }, [sortBy, sortOrder, selectedBuilding, selectedStatus, searchQuery]);
 
   const handleExportExcel = async () => {
     setExportLoading(true);
@@ -97,6 +225,8 @@ export default function ApartmentsList() {
   const fetchApartments = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
+      setAllLoaded(false);
+      setEditedFields({});
       let url = `/api/apartments?page=${page}&limit=21&sortBy=${sortBy}&sortOrder=${sortOrder}`;
       if (selectedBuilding) {
         url += `&buildingId=${selectedBuilding}`;
@@ -433,11 +563,87 @@ export default function ApartmentsList() {
         />
       )}
 
+      {/* Bulk actions bar */}
+      {viewMode === 'list' && (
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void handleLoadAll()}
+            disabled={loadingAll}
+            className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loadingAll ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {loadingAll ? 'Loading all…' : allLoaded ? `All loaded (${apartments.length})` : `Load all (${pagination.total})`}
+          </button>
+
+          {hasEdits && (
+            <button
+              type="button"
+              onClick={() => void handleBulkSave()}
+              disabled={bulkSaving}
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {bulkSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {bulkSaving ? 'Saving…' : `Save changes (${Object.keys(editedFields).length})`}
+            </button>
+          )}
+
+          {bulkSaveResult && (
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-opacity ${
+                bulkSaveResult.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'bg-red-50 text-red-700'
+              }`}
+            >
+              {bulkSaveResult.type === 'success' ? (
+                <CheckCircle2 className="h-4 w-4" />
+              ) : (
+                <AlertCircle className="h-4 w-4" />
+              )}
+              {bulkSaveResult.message}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Loading all overlay */}
+      {loadingAll && (
+        <div className="mb-4 overflow-hidden rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-white to-indigo-50">
+          <div className="relative h-1.5 w-full overflow-hidden bg-indigo-100">
+            <div className="absolute inset-0 animate-[shimmer_1.5s_ease-in-out_infinite] bg-gradient-to-r from-indigo-100 via-indigo-400 to-indigo-100" />
+          </div>
+          <div className="flex items-center gap-3 px-5 py-4">
+            <div className="relative">
+              <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-indigo-200 border-t-indigo-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-indigo-900">Loading all apartments…</p>
+              <p className="text-xs text-indigo-500">This may take a moment for large datasets</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="mb-4 text-sm text-gray-600">
-        Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-        {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-        {pagination.total} apartments
+        {allLoaded ? (
+          <>Showing all {apartments.length} apartments</>
+        ) : (
+          <>
+            Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
+            {pagination.total} apartments
+          </>
+        )}
       </div>
 
       {/* Empty state */}
@@ -584,6 +790,9 @@ export default function ApartmentsList() {
               <thead className="bg-gray-50">
                 <tr>
                   <SortableHeader field="apartmentNo" label="No" />
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Apt Name
+                  </th>
                   <SortableHeader field="building" label="Building" />
                   <SortableHeader field="status" label="Status" />
                   <SortableHeader field="sqm" label="Area (m²)" />
@@ -596,48 +805,72 @@ export default function ApartmentsList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
-                {apartments.map((apt) => (
-                  <tr key={apt.id} className="hover:bg-gray-50">
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                      {apt.apartmentNo}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                      {apt.building.district.name} - {apt.building.name}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <select
-                        value={apt.status}
-                        onChange={(e) => handleStatusChange(apt.id, e.target.value)}
-                        className={`select-chevron-list badge border pl-3 py-1.5 font-medium transition-colors ${getStatusColor(apt.status)} cursor-pointer appearance-none bg-right text-xs`}
-                      >
-                        <option value="UPCOMING">Upcoming</option>
-                        <option value="AVAILABLE">Available</option>
-                        <option value="RESERVED">Reserved</option>
-                        <option value="SOLD">Sold</option>
-                      </select>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                      {apt.sqm ? `${apt.sqm} m²` : '-'}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-semibold text-gray-900">
-                      {apt.total_price ? formatAmd(apt.total_price) : '-'}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900">
-                      {apt.total_paid ? formatAmd(apt.total_paid) : '-'}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900">
-                      {apt.balance ? formatAmd(apt.balance) : '-'}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                      <Link
-                        href={`/apartments/${apt.id}`}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                {apartments.map((apt) => {
+                  const edits = editedFields[apt.id];
+                  const noEdited = edits?.apartmentNo !== undefined;
+                  const nameEdited = edits?.apartmentName !== undefined;
+
+                  return (
+                    <tr key={apt.id} className={`hover:bg-gray-50 ${noEdited || nameEdited ? 'bg-amber-50/50' : ''}`}>
+                      <td className="whitespace-nowrap px-3 py-2">
+                        <input
+                          type="text"
+                          defaultValue={apt.apartmentNo}
+                          onChange={(e) => handleFieldEdit(apt.id, 'apartmentNo', e.target.value)}
+                          className={`w-24 rounded-md border px-2 py-1.5 text-sm font-medium text-gray-900 transition-colors focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 ${
+                            noEdited ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-transparent'
+                          }`}
+                        />
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2">
+                        <input
+                          type="text"
+                          defaultValue={apt.apartmentName ?? ''}
+                          placeholder="—"
+                          onChange={(e) => handleFieldEdit(apt.id, 'apartmentName', e.target.value)}
+                          className={`w-40 rounded-md border px-2 py-1.5 text-sm text-gray-900 transition-colors focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 ${
+                            nameEdited ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-transparent'
+                          }`}
+                        />
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                        {apt.building.district.name} - {apt.building.name}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-2">
+                        <select
+                          value={apt.status}
+                          onChange={(e) => handleStatusChange(apt.id, e.target.value)}
+                          className={`select-chevron-list badge border pl-3 py-1.5 font-medium transition-colors ${getStatusColor(apt.status)} cursor-pointer appearance-none bg-right text-xs`}
+                        >
+                          <option value="UPCOMING">Upcoming</option>
+                          <option value="AVAILABLE">Available</option>
+                          <option value="RESERVED">Reserved</option>
+                          <option value="SOLD">Sold</option>
+                        </select>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-2 text-sm text-gray-900">
+                        {apt.sqm ? `${apt.sqm} m²` : '-'}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-2 text-right text-sm font-semibold text-gray-900">
+                        {apt.total_price ? formatAmd(apt.total_price) : '-'}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-2 text-right text-sm text-gray-900">
+                        {apt.total_paid ? formatAmd(apt.total_paid) : '-'}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-2 text-right text-sm text-gray-900">
+                        {apt.balance ? formatAmd(apt.balance) : '-'}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
+                        <Link
+                          href={`/apartments/${apt.id}`}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -645,7 +878,7 @@ export default function ApartmentsList() {
       )}
 
       {/* Pagination */}
-      {pagination.total_pages > 1 && (
+      {pagination.total_pages > 1 && !allLoaded && (
         <div className="mt-6 flex items-center justify-between">
           <div className="text-sm text-gray-600">
             Page {pagination.page} of {pagination.total_pages}

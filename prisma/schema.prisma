@@ -78,6 +78,7 @@ model Apartment {
   id                    Int           @id @default(autoincrement())
   buildingId            Int           @map("building_id")
   apartmentNo           String        @map("apartment_no")
+  apartmentName         String?       @map("apartment_name") @db.VarChar(255)
   apartmentType         Int?          @map("apartment_type")
   floor                 Int?          @map("floor")
   status                ApartmentStatus @default(UPCOMING)

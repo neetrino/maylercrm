@@ -47,6 +47,7 @@ const salesTypeSchema = z.enum(['UNSOLD', 'MORTGAGE', 'CASH', 'TIMEBASED']);
 export const createApartmentSchema = z.object({
   buildingId: z.number().int().positive('ID здания должен быть положительным'),
   apartmentNo: z.string().min(1, 'Номер квартиры обязателен').max(50),
+  apartmentName: z.string().max(255).optional().nullable().or(z.literal('').transform(() => null)),
   apartmentType: z.number().int().optional(),
   floor: z.number().int().optional(),
   sqm: z.number().positive().optional(),
@@ -57,6 +58,7 @@ export const createApartmentSchema = z.object({
 export const updateApartmentSchema = z.object({
   buildingId: z.number().int().positive().optional(),
   apartmentNo: z.string().min(1).max(50).optional(),
+  apartmentName: z.string().max(255).optional().nullable().or(z.literal('').transform(() => null)),
   apartmentType: z.number().int().optional(),
   floor: z.number().int().optional().nullable(),
   status: apartmentStatusSchema.optional(),

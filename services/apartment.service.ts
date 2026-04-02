@@ -85,6 +85,7 @@ export const apartmentService = {
           id: true,
           buildingId: true,
           apartmentNo: true,
+          apartmentName: true,
           apartmentType: true,
           floor: true,
           status: true,
@@ -223,6 +224,7 @@ export const apartmentService = {
         id: true,
         buildingId: true,
         apartmentNo: true,
+        apartmentName: true,
         apartmentType: true,
         floor: true,
         status: true,
@@ -315,6 +317,7 @@ export const apartmentService = {
   async create(data: {
     buildingId: number;
     apartmentNo: string;
+    apartmentName?: string | null;
     apartmentType?: number;
     floor?: number;
     sqm?: number;
@@ -356,6 +359,7 @@ export const apartmentService = {
       data: {
         buildingId: data.buildingId,
         apartmentNo: data.apartmentNo.trim(),
+        apartmentName: data.apartmentName?.trim() || null,
         apartmentType: data.apartmentType,
         floor: data.floor,
         sqm: data.sqm,
@@ -437,6 +441,7 @@ export const apartmentService = {
         id: true,
         buildingId: true,
         apartmentNo: true,
+        apartmentName: true,
         apartmentType: true,
         floor: true,
         status: true,
@@ -513,6 +518,26 @@ export const apartmentService = {
       district_slug: apartment.building.district.slug,
       district_name: apartment.building.district.name,
     };
+  },
+
+  async bulkUpdate(items: Array<{ id: number; apartmentNo?: string; apartmentName?: string | null }>) {
+    const results = await prisma.$transaction(
+      items.map((item) => {
+        const data: Prisma.ApartmentUpdateInput = {};
+        if (item.apartmentNo !== undefined) {
+          data.apartmentNo = item.apartmentNo.trim();
+        }
+        if (item.apartmentName !== undefined) {
+          data.apartmentName = item.apartmentName?.trim() || null;
+        }
+        return prisma.apartment.update({
+          where: { id: item.id },
+          data,
+          select: { id: true, apartmentNo: true, apartmentName: true },
+        });
+      })
+    );
+    return results;
   },
 
   /** Ensure apartment has a landing token; generate if missing. Returns the token. */
