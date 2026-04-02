@@ -13,6 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { formatAmd, formatAmdNumber } from '@/lib/formatAmd';
 
 type TimelineData = {
   month: string;
@@ -58,18 +59,11 @@ export default function SalesTimeline() {
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   };
 
-  const formatAmount = (amount: number) => {
-    if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(1)}M AMD`;
-    }
-    return `${(amount / 1000).toFixed(0)}K AMD`;
-  };
-
   const chartData = data.map((item) => ({
     month: formatMonth(item.month),
     monthRaw: item.month, // Сохраняем оригинальный формат для сортировки
     'Deals Count': item.count,
-    'Amount (M AMD)': (item.amount / 1000000).toFixed(1),
+    'Amount (AMD)': item.amount,
   }));
 
   // Автоматическая настройка отображения меток на оси X
@@ -150,8 +144,12 @@ export default function SalesTimeline() {
                   stroke="#6b7280"
                   fontSize={12}
                   tickLine={false}
+                  tickFormatter={(v: number) => formatAmdNumber(v)}
                 />
                 <Tooltip 
+                  formatter={(value: number | undefined) =>
+                    value !== undefined ? formatAmd(value) : ''
+                  }
                   contentStyle={{
                     backgroundColor: 'white',
                     border: '1px solid #e5e7eb',
@@ -160,7 +158,7 @@ export default function SalesTimeline() {
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="Amount (M AMD)" 
+                  dataKey="Amount (AMD)" 
                   stroke="#10b981" 
                   strokeWidth={3}
                   dot={{ fill: '#10b981', r: 5 }}
@@ -196,7 +194,7 @@ export default function SalesTimeline() {
                       {item.count}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-semibold text-gray-900">
-                      {formatAmount(item.amount)}
+                      {formatAmd(item.amount)}
                     </td>
                   </tr>
                 ))}

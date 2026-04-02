@@ -2,7 +2,7 @@
 tags: [checklist, quality, project, review]
 ---
 
-# Проектный Quality Checklist
+# Project Quality Checklist
 
 > [!tip] Как пользоваться
 > Проходите разделы по порядку (**A → O** → инструменты → анти-паттерны). Отмечайте пункты `[ ]` → `[x]`. Перед релизом убедитесь, что выполнен **Minimum Acceptable Quality Gate** и заполнен **Release Readiness Summary**.

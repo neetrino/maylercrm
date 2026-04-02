@@ -11,6 +11,7 @@ export type ApartmentListAttachment = {
 export type ApartmentListRow = {
   id: number;
   apartmentNo: string;
+  apartmentName: string | null;
   status: string;
   sqm: number | null;
   total_price: number | null;

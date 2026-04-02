@@ -2,6 +2,12 @@ import { prisma } from '@/lib/prisma';
 import type { Apartment, ApartmentStatus } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import crypto from 'crypto';
+import {
+  assertNoExternalApartmentNoConflict,
+  assertUniqueApartmentNosInBatch,
+  buildBulkTempApartmentNo,
+  mergeBulkApartmentRows,
+} from '@/lib/apartmentBulkUpdate';
 
 export const apartmentService = {
   async getAll(filters?: {
@@ -85,6 +91,7 @@ export const apartmentService = {
           id: true,
           buildingId: true,
           apartmentNo: true,
+          apartmentName: true,
           apartmentType: true,
           floor: true,
           status: true,
@@ -223,6 +230,7 @@ export const apartmentService = {
         id: true,
         buildingId: true,
         apartmentNo: true,
+        apartmentName: true,
         apartmentType: true,
         floor: true,
         status: true,
@@ -315,6 +323,7 @@ export const apartmentService = {
   async create(data: {
     buildingId: number;
     apartmentNo: string;
+    apartmentName?: string | null;
     apartmentType?: number;
     floor?: number;
     sqm?: number;
@@ -356,6 +365,7 @@ export const apartmentService = {
       data: {
         buildingId: data.buildingId,
         apartmentNo: data.apartmentNo.trim(),
+        apartmentName: data.apartmentName?.trim() || null,
         apartmentType: data.apartmentType,
         floor: data.floor,
         sqm: data.sqm,
@@ -437,6 +447,7 @@ export const apartmentService = {
         id: true,
         buildingId: true,
         apartmentNo: true,
+        apartmentName: true,
         apartmentType: true,
         floor: true,
         status: true,
@@ -513,6 +524,53 @@ export const apartmentService = {
       district_slug: apartment.building.district.slug,
       district_name: apartment.building.district.name,
     };
+  },
+
+  async bulkUpdate(items: Array<{ id: number; apartmentNo?: string; apartmentName?: string | null }>) {
+    const ids = items.map((i) => i.id);
+    const existing = await prisma.apartment.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, buildingId: true, apartmentNo: true, apartmentName: true },
+    });
+    if (existing.length !== ids.length) {
+      throw new Error('One or more apartments not found');
+    }
+    const byId = new Map(existing.map((a) => [a.id, a]));
+    const merged = mergeBulkApartmentRows(items, byId);
+    assertUniqueApartmentNosInBatch(merged);
+    await assertNoExternalApartmentNoConflict(prisma, ids, merged);
+
+    const mergedById = new Map(merged.map((m) => [m.id, m]));
+
+    return prisma.$transaction(async (tx) => {
+      const rowsChangingNo = merged.filter((m) => m.newNo !== m.oldNo);
+      for (const m of rowsChangingNo) {
+        await tx.apartment.update({
+          where: { id: m.id },
+          data: { apartmentNo: buildBulkTempApartmentNo(m.id) },
+        });
+      }
+
+      const results: Array<{ id: number; apartmentNo: string; apartmentName: string | null }> = [];
+      for (const item of items) {
+        const data: Prisma.ApartmentUpdateInput = {};
+        const m = mergedById.get(item.id)!;
+        if (item.apartmentNo !== undefined) {
+          data.apartmentNo = m.newNo;
+        }
+        if (item.apartmentName !== undefined) {
+          data.apartmentName = m.newName;
+        }
+        if (Object.keys(data).length === 0) continue;
+        const upd = await tx.apartment.update({
+          where: { id: item.id },
+          data,
+          select: { id: true, apartmentNo: true, apartmentName: true },
+        });
+        results.push(upd);
+      }
+      return results;
+    });
   },
 
   /** Ensure apartment has a landing token; generate if missing. Returns the token. */
