@@ -11,6 +11,7 @@ import {
   LabelList,
 } from 'recharts';
 import type { LegendPayload } from 'recharts/types/component/DefaultLegendContent';
+import { formatAmd } from '@/lib/formatAmd';
 
 type FinancialData = {
   sold: {
@@ -61,15 +62,6 @@ export default function FinancialSummary() {
     return null;
   }
 
-  const formatAmount = (amount: number) => {
-    if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(1)}M AMD`;
-    } else if (amount >= 1000) {
-      return `${(amount / 1000).toFixed(0)}K AMD`;
-    }
-    return `${amount.toFixed(0)} AMD`;
-  };
-
   // Расчеты
   const totalSold = data.sold.amount;
   const totalNotSold = data.notSold.upcoming + data.notSold.available + data.notSold.reserved;
@@ -96,17 +88,17 @@ export default function FinancialSummary() {
       <div className="mb-6 rounded-xl border-2 border-gray-300 bg-gradient-to-r from-gray-50 to-gray-100 p-6">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-bold text-gray-900">Total Portfolio Value</h3>
-          <p className="text-3xl font-bold text-gray-900">{formatAmount(totalPortfolio)}</p>
+          <p className="text-3xl font-bold text-gray-900">{formatAmd(totalPortfolio)}</p>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-lg bg-white p-4 shadow-sm">
             <p className="mb-1 text-xs font-medium text-gray-500">Sold</p>
-            <p className="text-xl font-bold text-blue-600">{formatAmount(totalSold)}</p>
+            <p className="text-xl font-bold text-blue-600">{formatAmd(totalSold)}</p>
             <p className="mt-1 text-xs text-gray-500">{soldPercentage.toFixed(1)}% of portfolio</p>
           </div>
           <div className="rounded-lg bg-white p-4 shadow-sm">
             <p className="mb-1 text-xs font-medium text-gray-500">Not Sold</p>
-            <p className="text-xl font-bold text-gray-700">{formatAmount(totalNotSold)}</p>
+            <p className="text-xl font-bold text-gray-700">{formatAmd(totalNotSold)}</p>
             <p className="mt-1 text-xs text-gray-500">{(100 - soldPercentage).toFixed(1)}% of portfolio</p>
           </div>
           <div className="rounded-lg bg-white p-4 shadow-sm">
@@ -135,7 +127,7 @@ export default function FinancialSummary() {
             <div>
               <p className="mb-1 text-xs font-medium text-blue-700">Total Contract Value</p>
               <p className="text-3xl font-bold text-blue-900">
-                {formatAmount(data.sold.amount)}
+                {formatAmd(data.sold.amount)}
               </p>
             </div>
             
@@ -143,7 +135,7 @@ export default function FinancialSummary() {
               <div className="rounded-lg bg-white/60 p-4">
                 <p className="mb-1 text-xs font-medium text-blue-700">Paid</p>
                 <p className="text-2xl font-bold text-blue-900">
-                  {formatAmount(data.sold.paid)}
+                  {formatAmd(data.sold.paid)}
                 </p>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-blue-200">
                   <div
@@ -156,7 +148,7 @@ export default function FinancialSummary() {
               <div className="rounded-lg bg-white/60 p-4">
                 <p className="mb-1 text-xs font-medium text-blue-700">Outstanding Balance</p>
                 <p className="text-2xl font-bold text-blue-900">
-                  {formatAmount(data.sold.balance)}
+                  {formatAmd(data.sold.balance)}
                 </p>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-blue-200">
                   <div
@@ -216,7 +208,7 @@ export default function FinancialSummary() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: number | undefined) => value ? formatAmount(value) : ''}
+                  formatter={(value: number | undefined) => value ? formatAmd(value) : ''}
                   contentStyle={{
                     backgroundColor: 'white',
                     border: '1px solid #e5e7eb',
@@ -263,7 +255,7 @@ export default function FinancialSummary() {
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Upcoming</p>
             </div>
             <p className="text-2xl font-bold text-gray-900">
-              {formatAmount(data.notSold.upcoming)}
+              {formatAmd(data.notSold.upcoming)}
             </p>
             <p className="mt-2 text-xs text-gray-500">
               {totalPortfolio > 0 ? ((data.notSold.upcoming / totalPortfolio) * 100).toFixed(1) : 0}% of total
@@ -275,7 +267,7 @@ export default function FinancialSummary() {
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Available</p>
             </div>
             <p className="text-2xl font-bold text-gray-900">
-              {formatAmount(data.notSold.available)}
+              {formatAmd(data.notSold.available)}
             </p>
             <p className="mt-2 text-xs text-gray-500">
               {totalPortfolio > 0 ? ((data.notSold.available / totalPortfolio) * 100).toFixed(1) : 0}% of total
@@ -287,7 +279,7 @@ export default function FinancialSummary() {
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Reserved</p>
             </div>
             <p className="text-2xl font-bold text-gray-900">
-              {formatAmount(data.notSold.reserved)}
+              {formatAmd(data.notSold.reserved)}
             </p>
             <p className="mt-2 text-xs text-gray-500">
               {totalPortfolio > 0 ? ((data.notSold.reserved / totalPortfolio) * 100).toFixed(1) : 0}% of total

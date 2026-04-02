@@ -4,6 +4,11 @@ const amd = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 0,
 });
 
+/** Число с разделителями тысяч (для осей графиков и т.п.). */
+export function formatAmdNumber(value: number): string {
+  return amd.format(value);
+}
+
 export function formatAmd(value: number): string {
-  return `${amd.format(value)} AMD`;
+  return `${formatAmdNumber(value)} AMD`;
 }
