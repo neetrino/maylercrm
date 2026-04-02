@@ -54,6 +54,7 @@ export async function GET(
     const items = result.items.map((apt) => ({
       id: apt.id,
       apartment_no: apt.apartmentNo,
+      apartment_name: apt.apartmentName,
       apartment_type: apt.apartmentType,
       floor: apt.floor,
       status: apt.status.toLowerCase(),

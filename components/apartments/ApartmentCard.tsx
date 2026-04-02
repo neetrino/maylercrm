@@ -55,6 +55,7 @@ function normalizeAttachmentsForUpload(
 type Apartment = {
   id: number;
   apartmentNo: string;
+  apartmentName: string | null;
   apartmentType: number | null;
   floor: number | null;
   status: string;
@@ -185,6 +186,9 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
       }
       if (formData.apartmentNo !== undefined) {
         apiData.apartmentNo = String(formData.apartmentNo).trim();
+      }
+      if (formData.apartmentName !== undefined) {
+        apiData.apartmentName = parseString(formData.apartmentName);
       }
       if (formData.apartmentType !== undefined) {
         const raw = formData.apartmentType;
@@ -454,6 +458,9 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               Apartment {apartment.apartmentNo}
+              {apartment.apartmentName?.trim() ? (
+                <span className="font-semibold text-gray-600"> — {apartment.apartmentName.trim()}</span>
+              ) : null}
             </h1>
             <p className="mt-1 text-sm text-gray-500">
               {apartment.district_name} - {apartment.building_name}
@@ -567,6 +574,30 @@ export default function ApartmentCard({ apartmentId }: ApartmentCardProps) {
                   />
                 ) : (
                   <p className="text-base font-medium text-gray-900">{apartment.apartmentNo}</p>
+                )}
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Apt name
+                </label>
+                {editing ? (
+                  <input
+                    type="text"
+                    value={formData.apartmentName ?? ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        apartmentName: e.target.value,
+                      })
+                    }
+                    className="input-field"
+                    placeholder="Optional display name"
+                    maxLength={255}
+                  />
+                ) : (
+                  <p className="text-base font-medium text-gray-900">
+                    {apartment.apartmentName?.trim() || '—'}
+                  </p>
                 )}
               </div>
               <div>

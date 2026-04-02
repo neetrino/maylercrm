@@ -34,6 +34,24 @@ VERIFY_API_BASE_URL=https://maylercrm.neetrino.com npm run verify-api
 
 ---
 
+## 🆕 Apt Name — `apartment_name` (April 2026)
+
+Ապարտամենտի **ցուցադրման / մարկետինգային անվանում** (ըստ ցանկության)։ **Տարբերվում է** `apartment_no`-ից (պլանի/հաշվառման համարը)։
+
+| API field (JSON) | Type | Description (EN) |
+|------------------|------|------------------|
+| `apartment_name` | string \| null | Optional display name / marketing label for the unit. Distinct from `apartment_no` (plan number). Max 255 chars. |
+
+**Որտեղ է վերադարձվում.** Բոլոր endpoint-ներում, որտեղ JSON-ում կա `apartment_no` — `GET /api/external/full`, `GET /api/buildings/{building_id}/apartments`, `GET /api/buildings-by-slug/{slug}/apartments`, `GET /api/external/apartments/{id}`։
+
+**Թարմացում արտաքին Bearer API-ով.** `PUT /api/apartments/{apartment_id}/status` — body կամ query string-ում `apartment_name` (նույն snake_case, ինչ մնացած դաշտերը)։
+
+**Թարմացում ներքին dashboard-ով.** `PUT /api/apartments/{id}` — body-ում `apartmentName` (camelCase)։
+
+*English:* **`apartment_name`** in API responses is the optional **Apt Name** field; use **`apartment_no`** for the plan/unit number.
+
+---
+
 ## 📋 Full Data API — Բոլոր տվյալները մեկ JSON-ում (GET)
 
 Ստանալ **բոլոր** տվյալները **մեկ** հարցումով: Districts → Buildings → Apartments (attachments-ով միասին): Արտաքին թիմը կարող է փոխարինել 4-5 առանձին հարցումները մեկ հարցումով:
@@ -65,6 +83,7 @@ curl -L -X GET "https://meluviscrm.vercel.app/api/external/full" \
             {
               "id": 1,
               "apartment_no": "12-05",
+              "apartment_name": "Penthouse A",
               "apartment_type": 2,
               "status": "available",
               "sqm": 52.4,
@@ -266,6 +285,7 @@ curl -L -X GET "https://meluviscrm.vercel.app/api/buildings/1/apartments?status=
       {
         "id": 1,
         "apartment_no": "12-05",
+        "apartment_name": "Penthouse A",
         "apartment_type": 2,
         "status": "available",
         "sqm": 52.4,
@@ -312,6 +332,7 @@ curl -L -X GET "https://meluviscrm.vercel.app/api/buildings/1/apartments?status=
   - `items` (array) - Բնակարանների զանգված
   - `id` (number) - Բնակարանի ID
   - `apartment_no` (string) - Բնակարանի համար
+  - `apartment_name` (string, nullable) - Apt Name — ցուցադրման անվանում (`apartment_no`-ից տարբեր)
   - `apartment_type` (number) - Բնակարանի տիպ
   - `status` (string) - Կարգավիճակ: `upcoming`, `available`, `reserved`, `sold`
   - `sqm` (number) - Տարածք մ²-ով
@@ -360,6 +381,7 @@ curl -L -X GET "https://meluviscrm.vercel.app/api/external/apartments/1" \
 {
   "id": 1,
   "apartment_no": "12-05",
+  "apartment_name": "Penthouse A",
   "apartment_type": 2,
   "status": "available",
   "sqm": 52.4,
@@ -413,6 +435,7 @@ curl -L -X GET "https://meluviscrm.vercel.app/api/external/apartments/1" \
 - `floorplan_distribution` (string, nullable, max 500) - Պլանավորման բաշխում
 - `exterior_link` (string, nullable) - Արտաքին հղում 1
 - `exterior_link2` (string, nullable) - Արտաքին հղում 2
+- `apartment_name` (string, nullable) - Apt Name / ցուցադրման անվանում (տարբերվում է `apartment_no`-ից)
 - **Նոր դաշտեր (2026):**
 - `buyer_address` (string, nullable) - Գնորդի հասցե / Buyer's address
 - `other_buyers` (string, nullable) - Այլ գնորդներ (անուններ) / Other buyers (co-buyers names)
@@ -488,6 +511,7 @@ curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/343/status?status=a
   - `other_buyers` (string, optional, nullable) - Այլ սեփականատերեր
   - `payment_schedule` (string, optional, nullable) - Տարաժամկետի պայմաններ
   - `deal_description` (string, optional, nullable) - Այլ նշումներ
+  - `apartment_name` (string, optional, nullable) - Apt Name (մինչև 255 նիշ)
 
 **Վավեր կարգավիճակի արժեքներ:**
 - `upcoming` - Առաջիկա
@@ -500,6 +524,7 @@ curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/343/status?status=a
 {
   "id": 1,
   "status": "sold",
+  "apartment_name": "Penthouse A",
   "deal_date": "2026-01-20",
   "ownership_name": "John Doe",
   "email": "john@example.com",
@@ -519,6 +544,7 @@ curl -L -X PUT "https://meluviscrm.vercel.app/api/apartments/343/status?status=a
 **Պատասխանի դաշտեր:**
 - `id` (number) - Բնակարանի ID
 - `status` (string) - Նոր կարգավիճակ
+- `apartment_name` (string, nullable) - Apt Name
 - `deal_date` (string, ISO 8601 date, nullable) - Գործարքի ամսաթիվ
 - `ownership_name` (string, nullable) - Սեփականատիրոջ անուն
 - `email` (string, nullable) - Email

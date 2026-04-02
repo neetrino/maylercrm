@@ -21,12 +21,15 @@ export default function ApartmentForm({
   const [formData, setFormData] = useState({
     buildingId: buildings[0]?.id || 0,
     apartmentNo: '',
+    apartmentName: '',
     apartmentType: '',
     floor: '',
     sqm: '',
     priceSqm: '',
     status: 'UPCOMING',
   });
+  /** After user edits Apt name, stop mirroring Apartment No (create flow only). */
+  const [aptNameEditedManually, setAptNameEditedManually] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -42,6 +45,7 @@ export default function ApartmentForm({
         body: JSON.stringify({
           buildingId: formData.buildingId,
           apartmentNo: formData.apartmentNo,
+          apartmentName: formData.apartmentName.trim() || null,
           apartmentType: formData.apartmentType
             ? parseInt(formData.apartmentType)
             : undefined,
@@ -104,13 +108,47 @@ export default function ApartmentForm({
             <input
               type="text"
               value={formData.apartmentNo}
-              onChange={(e) =>
-                setFormData({ ...formData, apartmentNo: e.target.value })
-              }
+              onChange={(e) => {
+                const apartmentNo = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  apartmentNo,
+                  ...(!aptNameEditedManually ? { apartmentName: apartmentNo } : {}),
+                }));
+              }}
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
               placeholder="12-05"
             />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Apt name
+            </label>
+            <input
+              type="text"
+              value={formData.apartmentName}
+              onChange={(e) => {
+                setAptNameEditedManually(true);
+                setFormData({ ...formData, apartmentName: e.target.value });
+              }}
+              onBlur={() => {
+                if (!formData.apartmentName.trim() && formData.apartmentNo) {
+                  setAptNameEditedManually(false);
+                  setFormData((prev) => ({
+                    ...prev,
+                    apartmentName: prev.apartmentNo,
+                  }));
+                }
+              }}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              placeholder="Matches apartment number until you change it"
+              maxLength={255}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Filled automatically from Apartment No. Edit here only when the display name should differ.
+            </p>
           </div>
 
           <div className="mb-4">
