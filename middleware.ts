@@ -65,6 +65,11 @@ export default auth(async (req) => {
     return NextResponse.next();
   }
 
+  // Public liveness probe for uptime monitors (exact path only)
+  if (path === '/api/health') {
+    return NextResponse.next();
+  }
+
   // Allow API routes with Bearer Token (they handle auth themselves)
   if (path.startsWith('/api/')) {
     const authHeader = req.headers.get('authorization');
